@@ -1,0 +1,41 @@
+data,compromisso,seguiu_recomendacao,chegou_no_horario,atraso_min
+2026-10-19,Aula na FIAP,sim,sim,0
+2026-10-20,Reunião de grupo,nao,sim,0
+2026-10-21,Estágio,sim,sim,0
+2026-10-22,Reunião de grupo,sim,sim,0
+2026-10-23,Estágio,sim,sim,0
+2026-10-24,Aula na FIAP,sim,sim,0
+2026-10-25,Estágio,sim,sim,0
+2026-10-26,Aula na FIAP,nao,nao,9
+2026-10-27,Aula na FIAP,nao,sim,0
+2026-10-28,Estágio,nao,nao,19
+2026-10-29,Aula na FIAP,sim,sim,0
+2026-10-30,Estágio,sim,sim,0
+2026-10-31,Aula na FIAP,sim,sim,0
+2026-11-01,Aula na FIAP,sim,sim,0
+2026-11-02,Aula na FIAP,sim,sim,0
+2026-11-03,Estágio,sim,sim,0
+2026-11-04,Aula na FIAP,nao,nao,21
+2026-11-05,Aula na FIAP,sim,sim,0
+2026-11-06,Reunião de grupo,sim,sim,0
+2026-11-07,Estágio,sim,sim,0
+2026-11-08,Aula na FIAP,sim,nao,8
+2026-11-09,Reunião de grupo,nao,sim,0
+2026-11-10,Reunião de grupo,sim,sim,0
+2026-11-11,Aula na FIAP,sim,sim,0
+2026-11-12,Aula na FIAP,sim,sim,0
+2026-11-13,Aula na FIAP,sim,sim,0
+2026-10-19,Reunião de grupo,nao,sim,0
+2026-10-20,Estágio,sim,sim,0
+2026-10-21,Reunião de grupo,sim,sim,0
+2026-10-22,Reunião de grupo,sim,nao,3
+2026-10-23,Estágio,nao,nao,18
+2026-10-24,Reunião de grupo,sim,sim,0
+2026-10-25,Aula na FIAP,sim,sim,0
+2026-10-26,Aula na FIAP,sim,sim,0
+2026-10-27,Aula na FIAP,nao,nao,18
+2026-10-28,Aula na FIAP,sim,sim,0
+2026-10-29,Reunião de grupo,nao,sim,0
+2026-10-30,Reunião de grupo,sim,sim,0
+2026-10-31,Aula na FIAP,sim,nao,21
+2026-11-01,Estágio,nao,nao,8

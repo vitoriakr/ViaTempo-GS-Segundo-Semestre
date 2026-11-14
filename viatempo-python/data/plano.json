@@ -1,0 +1,10 @@
+{
+  "usuario": "Marina",
+  "compromisso": "08:00",
+  "saida": "07:14",
+  "despertar": "06:29",
+  "trajeto_min": 35,
+  "urgencia": "vermelho",
+  "mensagem": "Saia no horário! Cada minuto de atraso aumenta bastante o trajeto.",
+  "alerta": null
+}
