@@ -1,64 +1,71 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { buildRecommendation, formatTime } from '../utils/schedule';
-import { Modal } from './Primitives';
+import { buildRecommendation, formatDate, formatTime } from '../utils/schedule';
 
-const prompts = ['Como está meu dia?', 'Quando devo sair?', 'Há algum conflito?'];
+const prompts = ['Como está meu dia?', 'Tenho algum conflito?', 'Como me preparo?'];
 
-function replyTo(question, { todayEvents, events, nextEvent, conflicts }) {
-  const text = question.toLocaleLowerCase('pt-BR');
-  const collision = [...conflicts.entries()].filter(([, titles]) => titles.length);
-
-  if (/conflit|choque|sobrepos/.test(text)) {
-    if (!collision.length) return 'Sua agenda não tem conflitos de horário.';
-    const names = [...new Set(collision.flatMap(([id, titles]) => [events.find((event) => event.id === id)?.title, ...titles]).filter(Boolean))];
-    return `Há horários sobrepostos em ${[...new Set(names)].join(', ')}. Confira a agenda para ajustar.`;
-  }
-
-  if (!todayEvents.length && !nextEvent) return 'Sua agenda está vazia. Adicione um compromisso para calcular os horários.';
-  if (!nextEvent) return `Você tem ${todayEvents.length} compromisso${todayEvents.length === 1 ? '' : 's'} hoje. Confira os horários na agenda.`;
-
+function makeSummary({ todayEvents, nextEvent, conflicts, recommendations }) {
+  const collisions = [...conflicts.values()].flat();
+  const conflictLine = collisions.length ? `Encontrei sobreposição na agenda: ${[...new Set(collisions)].slice(0, 2).join(' e ')}.` : '';
+  if (!nextEvent) return `${todayEvents.length ? `Você tem ${todayEvents.length} compromisso${todayEvents.length === 1 ? '' : 's'} hoje. ` : 'Sua agenda está livre por enquanto. '}Adicione seus compromissos e eu te ajudo a organizar os horários. ${conflictLine}`.trim();
   const plan = buildRecommendation(nextEvent);
-  const daySummary = todayEvents.length
-    ? `Hoje há ${todayEvents.length} compromisso${todayEvents.length === 1 ? '' : 's'}. `
-    : 'Sua agenda de hoje está livre. ';
-  const nextSummary = todayEvents.some((event) => event.id === nextEvent.id)
-    ? ''
-    : `Seu próximo compromisso é ${nextEvent.title}, às ${nextEvent.time}. `;
-  const schedule = `Para ${nextEvent.title}, comece a se preparar às ${formatTime(plan.recommendedPrepare)} e saia às ${formatTime(plan.recommendedDeparture)}.`;
-
-  if (/organ|hoje|rotina|agenda|prepar|acord|sair|hor.rio|planej/.test(text)) {
-    return `${daySummary}${nextSummary}${schedule}${nextEvent.message ? ` ${nextEvent.message}` : ''}`;
-  }
-
-  return 'Posso consultar os horários do próximo compromisso ou procurar conflitos. Qual prefere?';
+  const now = new Date();
+  const localToday = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  const day = nextEvent.date === localToday ? 'Hoje' : formatDate(nextEvent.date, { weekday: 'long', day: 'numeric', month: 'long' });
+  const recommendation = recommendations[0];
+  const suggestion = recommendation?.type === 'delay'
+    ? ` Sugestão: saia às ${formatTime(recommendation.plan.recommendedDeparture)} para compensar o trânsito.`
+    : recommendation?.type === 'margin' ? ' Sugestão: adicione 5 minutos de margem antes de sair.' : '';
+  return `${day}, seu próximo compromisso é ${nextEvent.title}, às ${nextEvent.time}. Comece a se preparar às ${formatTime(plan.recommendedPrepare)} e saia às ${formatTime(plan.recommendedDeparture)}.${suggestion} ${conflictLine}`.trim();
 }
 
-export default function AssistantModal({ todayEvents, events, nextEvent, conflicts, onClose }) {
+function answer(question, context) {
+  const text = question.toLocaleLowerCase('pt-BR');
+  const conflicts = [...context.conflicts.values()].flat();
+  if (/conflit|choque|sobrepos/.test(text)) return conflicts.length ? `Há sobreposição com ${[...new Set(conflicts)].join(' e ')}. Abra a agenda para conferir os horários e ajustar os compromissos.` : 'Conferi os horários: não encontrei conflitos na sua agenda.';
+  if (/vazi|livre/.test(text) && !context.todayEvents.length) return 'Seu dia está livre por enquanto. Você pode adicionar um compromisso ou importar sua agenda para eu ajudar a organizar.';
+  if (/amanh/.test(text)) {
+    const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
+    const iso = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth() + 1).padStart(2, '0')}-${String(tomorrow.getDate()).padStart(2, '0')}`;
+    const events = context.events.filter((event) => event.date === iso);
+    return events.length ? `Amanhã você tem ${events.map((event) => `${event.title}, às ${event.time}`).join('; ')}.` : 'Amanhã sua agenda está livre.';
+  }
+  if (/organ|hoje|rotina|agenda|prepar|acord|sair|hor.rio|planej|otimiz|melhor/.test(text)) return makeSummary(context);
+  return 'Posso resumir seu dia, conferir conflitos ou ajudar com a preparação para o próximo compromisso.';
+}
+
+function BotFace() {
+  return <svg className="bot-face" viewBox="0 0 64 64" aria-hidden="true"><path d="M32 7v7"/><circle cx="32" cy="5" r="3"/><rect x="9" y="15" width="46" height="39" rx="16"/><path d="M20 57h24"/><circle className="bot-eye" cx="23" cy="33" r="3"/><circle className="bot-eye" cx="41" cy="33" r="3"/><path d="M25 42q7 7 14 0"/><circle className="bot-cheek" cx="16" cy="39" r="2"/><circle className="bot-cheek" cx="48" cy="39" r="2"/></svg>;
+}
+
+export default function AssistantWidget({ todayEvents, events, nextEvent, conflicts, recommendations, onFeedback }) {
+  const [open, setOpen] = useState(false);
   const [question, setQuestion] = useState('');
-  const [messages, setMessages] = useState([{ role: 'assistant', text: 'O que você quer planejar?' }]);
+  const [messages, setMessages] = useState([]);
   const bottomRef = useRef(null);
-
-  useEffect(() => bottomRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }), [messages]);
-
+  const context = { todayEvents, events, nextEvent, conflicts, recommendations };
+  useEffect(() => { if (open) bottomRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }, [messages, open]);
+  useEffect(() => {
+    if (!open) return undefined;
+    function onKeyDown(event) { if (event.key === 'Escape') setOpen(false); }
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [open]);
   function ask(value = question) {
-    const prompt = value.trim();
-    if (!prompt) return;
-    const answer = replyTo(prompt, { todayEvents, events, nextEvent, conflicts });
-    setMessages((current) => [...current, { role: 'user', text: prompt }, { role: 'assistant', text: answer }]);
+    const text = value.trim(); if (!text) return;
+    setMessages((items) => [...items, { role: 'user', text }, { role: 'assistant', text: answer(text, context) }]);
     setQuestion('');
   }
-
-  return <Modal title="Planejar rotina" onClose={onClose}>
-    <p className="assistant-note">Sugestões com base nos seus compromissos.</p>
-    <div className="assistant-messages" aria-live="polite" aria-label="Conversa com o assistente">
-      {messages.map((message, index) => <p className={`assistant-message ${message.role}`} key={index}>{message.text}</p>)}
-      <div ref={bottomRef} />
-    </div>
-    {messages.length === 1 && <div className="assistant-prompts" aria-label="Sugestões de pergunta">{prompts.map((prompt) => <button key={prompt} className="btn btn-outline-dark btn-sm" onClick={() => ask(prompt)}>{prompt}</button>)}</div>}
-    <form className="assistant-form" onSubmit={(event) => { event.preventDefault(); ask(); }}>
-      <label className="visually-hidden" htmlFor="assistant-question">Sua pergunta</label>
-      <input id="assistant-question" className="form-control" maxLength="240" value={question} onChange={(event) => setQuestion(event.target.value)} placeholder="Pergunte sobre sua agenda" />
-      <button className="btn btn-dark" type="submit" disabled={!question.trim()} aria-label="Enviar pergunta">Enviar</button>
-    </form>
-  </Modal>;
+  return <div className="assistant-widget">
+    {open && <section id="assistant-panel" className="assistant-panel" role="dialog" aria-modal="false" aria-labelledby="assistant-title">
+      <header className="assistant-widget-header"><span className="assistant-avatar"><BotFace /></span><div><h2 id="assistant-title">Seu dia, em foco</h2><p>Assistente da ViaTempo</p></div><button className="assistant-close" onClick={() => setOpen(false)} aria-label="Fechar assistente">×</button></header>
+      <div className="assistant-widget-content">
+        <div className="assistant-overview"><span className="eyebrow">UM OLHAR NA SUA ROTINA</span><p>{makeSummary(context)}</p></div>
+        {recommendations.length > 0 && <section className="assistant-widget-recs" aria-label="Sugestões para sua agenda"><h3>Sugestões para hoje</h3>{recommendations.slice(0, 3).map(({ event, plan, type }) => <article className="assistant-recommendation" key={event.id}><p><strong>{event.title}</strong>{type === 'delay' ? ` · saída ${formatTime(plan.departure)} → ${formatTime(plan.recommendedDeparture)}` : type === 'margin' ? ' · adicionar 5 min de margem' : ' · confira esta recomendação'}</p>{type === 'delay' && <button className="btn btn-sm btn-dark" onClick={() => onFeedback(event, 'accepted')}>Mudar horário</button>}{type === 'margin' && <button className="btn btn-sm btn-dark" onClick={() => onFeedback(event, 'margin')}>Adicionar 5 min</button>}</article>)}</section>}
+        <div className="assistant-messages" aria-live="polite" aria-label="Conversa com o assistente">{messages.map((message, index) => <p className={`assistant-message ${message.role}`} key={index}>{message.text}</p>)}<div ref={bottomRef} /></div>
+        {!messages.length && <div className="assistant-prompts">{prompts.map((prompt) => <button className="btn btn-sm btn-outline-secondary" key={prompt} onClick={() => ask(prompt)}>{prompt}</button>)}</div>}
+        <form className="assistant-form" onSubmit={(event) => { event.preventDefault(); ask(); }}><input className="form-control" value={question} onChange={(event) => setQuestion(event.target.value)} placeholder="Pergunte sobre sua rotina" aria-label="Pergunte sobre sua rotina" /><button className="btn btn-dark" type="submit">Enviar</button></form>
+      </div>
+    </section>}
+    <button className={`assistant-launcher${open ? ' is-open' : ''}`} onClick={() => setOpen((value) => !value)} aria-label={open ? 'Fechar assistente' : 'Conversar sobre minha rotina'} aria-expanded={open} aria-controls="assistant-panel"><BotFace />{!open && recommendations.length > 0 && <span className="assistant-badge">{recommendations.length}</span>}</button>
+  </div>;
 }

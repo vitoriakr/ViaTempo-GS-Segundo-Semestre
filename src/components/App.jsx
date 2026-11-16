@@ -5,7 +5,7 @@ import { Sidebar, Topbar, Toast, Modal, Brand } from './Primitives';
 import { EmptyState, EventCard, EventModal, RecommendationMessage } from './EventComponents';
 import { ImportExportPanel, LocationsPanel, PreferencesModal } from './DataComponents';
 import Onboarding from './Onboarding';
-import AssistantModal from './Assistant';
+import AssistantWidget from './Assistant';
 
 const viewTitles = { home: 'Meu dia', agenda: 'Minha agenda', places: 'Meus locais', data: 'Seus dados' };
 
@@ -16,7 +16,6 @@ export default function App() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [eventModal, setEventModal] = useState(null);
   const [preferencesOpen, setPreferencesOpen] = useState(false);
-  const [assistantOpen, setAssistantOpen] = useState(false);
   const [agendaDate, setAgendaDate] = useState('');
   const [toast, setToast] = useState(null);
   const [pendingDelete, setPendingDelete] = useState(null);
@@ -169,7 +168,7 @@ export default function App() {
     <Sidebar active={view} onNavigate={(next) => { setView(next); setMenuOpen(false); }} open={menuOpen} onClose={() => setMenuOpen(false)} />
     <main className="main-area"><Topbar title={viewTitles[view]} date={formattedToday} onMenu={() => setMenuOpen(true)} onPreferences={() => setPreferencesOpen(true)} />
       <div className="page-body">
-        {view === 'home' && <Dashboard todayEvents={todayEvents} nextEvent={nextEvent} recommendations={recommendations} conflicts={eventConflicts} today={today} placeFull={placeFull} onNew={() => setEventModal({ mode: 'new' })} onAssistant={() => setAssistantOpen(true)} onEdit={setEventModal} onDelete={setPendingDelete} onFeedback={changeRecommendation} onEventFeedback={recordOutcome} onNavigate={setView} />}
+        {view === 'home' && <Dashboard todayEvents={todayEvents} nextEvent={nextEvent} recommendations={recommendations} conflicts={eventConflicts} today={today} placeFull={placeFull} onNew={() => setEventModal({ mode: 'new' })} onEdit={setEventModal} onDelete={setPendingDelete} onFeedback={changeRecommendation} onEventFeedback={recordOutcome} onNavigate={setView} />}
         {view === 'agenda' && <AgendaPage events={sortedEvents} conflicts={eventConflicts} placeFull={placeFull} filter={agendaDate} setFilter={setAgendaDate} onNew={() => setEventModal({ mode: 'new' })} onEdit={setEventModal} onDelete={setPendingDelete} onFeedback={changeRecommendation} onEventFeedback={recordOutcome} />}
         {view === 'places' && <LocationsPanel locations={data.locations} onSave={addPlace} onDelete={removePlace} />}
         {view === 'data' && <ImportExportPanel data={data} onImport={importData} onDeleteData={deleteAllData} />}
@@ -177,16 +176,16 @@ export default function App() {
     </main>
     <Toast message={toast?.message} type={toast?.type} onClose={() => setToast(null)} />
     {eventModal && <EventModal event={eventModal.mode === 'new' ? null : eventModal} initialDate={agendaDate || today} locations={data.locations} preferences={data.preferences} onClose={() => setEventModal(null)} onSave={saveEvent} />}
-    {assistantOpen && <AssistantModal todayEvents={todayEvents} events={sortedEvents} nextEvent={nextEvent} conflicts={eventConflicts} onClose={() => setAssistantOpen(false)} />}
+    <AssistantWidget todayEvents={todayEvents} events={sortedEvents} nextEvent={nextEvent} conflicts={eventConflicts} recommendations={recommendations} onFeedback={changeRecommendation} />
     {preferencesOpen && <PreferencesModal preferences={data.preferences} onClose={() => setPreferencesOpen(false)} onSave={savePreferences} />}
     {pendingDelete && <Modal title={pendingDelete.all ? 'Apagar seus dados?' : 'Excluir compromisso?'} eyebrow="CONFIRMAR AÇÃO" onClose={() => setPendingDelete(null)} footer={<><button className="btn btn-light" onClick={() => setPendingDelete(null)}>Cancelar</button><button className="btn btn-danger" onClick={pendingDelete.all ? confirmDeleteAll : deleteEvent}>{pendingDelete.all ? 'Apagar dados' : 'Excluir compromisso'}</button></>}><p>Confirme que deseja {pendingDelete.all ? pendingDelete.title : `remover “${pendingDelete.title}” da sua agenda`}. Essa ação não pode ser desfeita.</p></Modal>}
   </div>;
 }
 
-function Dashboard({ todayEvents, nextEvent, recommendations, conflicts, today, placeFull, onNew, onAssistant, onEdit, onDelete, onFeedback, onEventFeedback, onNavigate }) {
+function Dashboard({ todayEvents, nextEvent, recommendations, conflicts, today, placeFull, onNew, onEdit, onDelete, onFeedback, onEventFeedback, onNavigate }) {
   const plan = nextEvent && buildRecommendation(nextEvent);
   return <>
-    <header className="page-intro"><div><h2>Meu dia</h2></div><div className="page-intro-actions"><button className="btn btn-outline-dark" onClick={onAssistant}>Planejar rotina</button><button className="btn btn-dark" onClick={onNew}>＋ Novo compromisso</button></div></header>
+    <header className="page-intro"><div><h2>Meu dia</h2></div><div className="page-intro-actions"><button className="btn btn-dark" onClick={onNew}>＋ Novo compromisso</button></div></header>
     {nextEvent && <section className="next-plan"><div><span className="eyebrow">PRÓXIMO COMPROMISSO</span><h3>{nextEvent.title}</h3><p>{formatDate(nextEvent.date, { weekday: 'long', day: 'numeric', month: 'long' })} · {nextEvent.time}{placeFull(nextEvent.locationId) || nextEvent.importedLocation ? ` · ${placeFull(nextEvent.locationId) || nextEvent.importedLocation}` : ''}</p>{nextEvent.date !== today && (conflicts.get(nextEvent.id) || []).map((title, index) => <p className="conflict-warning" role="note" key={`${title}-${index}`}>Conflita com “{title}”</p>)}</div><div className="next-plan-times"><span>Preparar <strong>{formatTime(plan.recommendedPrepare)}</strong></span><span>Sair <strong>{formatTime(plan.recommendedDeparture)}</strong></span></div></section>}
     {recommendations.length > 0 && <section className="recommendation-section" aria-labelledby="recommendation-title"><div className="section-heading"><h2 id="recommendation-title">Recomendações <span>{recommendations.length}</span></h2></div><div className="recommendation-list">{recommendations.map(({ event, plan: suggestion, type }) => {
       return <article className="recommendation-card" key={event.id}><div className="recommendation-copy"><span>{formatDate(event.date, { weekday: 'short', day: 'numeric', month: 'short' })} · {event.title}</span>{type === 'delay' && <p>O trajeto pode levar {suggestion.delay} min a mais. Mude a saída de <strong>{formatTime(suggestion.departure)}</strong> para <strong>{formatTime(suggestion.recommendedDeparture)}</strong>.</p>}{type === 'message' && <RecommendationMessage event={event} />}{type === 'margin' && <p>Sua margem é de {event.bufferMinutes} min. Adicione 5 min para ter mais tempo em caso de imprevisto.</p>}</div>{type === 'delay' && <><button className="btn btn-dark" onClick={() => onFeedback(event, 'accepted')}>Mudar horário</button><button className="recommendation-dismiss" onClick={() => onFeedback(event, 'rejected')}>Manter atual</button></>}{type === 'margin' && <button className="btn btn-dark" onClick={() => onFeedback(event, 'margin')}>Adicionar 5 min</button>}</article>;
