@@ -7,7 +7,6 @@ const emptyPreferences = { alertThreshold: 5, defaultPrepMinutes: 30, defaultBuf
 
 export default function Onboarding({ onComplete }) {
   const [step, setStep] = useState('choose');
-  const [provider, setProvider] = useState('google');
   const [fileError, setFileError] = useState('');
   const [busy, setBusy] = useState(false);
   const [manual, setManual] = useState({ title: '', date: '', time: '', destination: '', travelMinutes: '', prepMinutes: '', bufferMinutes: '' });
@@ -15,13 +14,14 @@ export default function Onboarding({ onComplete }) {
   const [manualError, setManualError] = useState('');
   const [preview, setPreview] = useState(null);
 
-  async function readCalendarFile(file, format) {
+  async function readCalendarFile(file) {
     if (!file) return;
     setBusy(true); setFileError('');
     try {
+      const format = file.name.toLowerCase().endsWith('.ics') ? 'ics' : 'json';
       const text = await file.text();
       const payload = format === 'ics' ? { events: parseICS(text), locations: [], preferences: {} } : normalizeImportedJSON(JSON.parse(text));
-      setPreview({ ...payload, fileName: file.name });
+      setPreview({ ...payload, fileName: file.name, fileFormat: format });
     } catch (error) { setFileError(error.message || 'Não consegui ler esse arquivo.'); }
     finally { setBusy(false); }
   }
@@ -68,7 +68,7 @@ export default function Onboarding({ onComplete }) {
     const importedLocations = preview.locations || [];
     const locations = importedLocations.map((location) => ({ ...location, id: location.id || makeId('place') }));
     const ids = new Map(importedLocations.map((item, index) => [item.id, locations[index]?.id]));
-    const events = preview.events.map((event) => ({ ...event, id: makeId('event'), locationId: ids.get(event.locationId) || event.locationId || '', source: event.source || (provider === 'json' ? 'json' : 'ics') }));
+    const events = preview.events.map((event) => ({ ...event, id: makeId('event'), locationId: ids.get(event.locationId) || event.locationId || '', source: event.source || preview.fileFormat }));
     await onComplete({ events, locations, usuario: preview.usuario || '', preferences: { ...emptyPreferences, ...(preview.preferences || {}) }, feedback: preview.feedback || [] });
   }
 
@@ -76,14 +76,13 @@ export default function Onboarding({ onComplete }) {
 
   return <main className="onboarding-shell">
     <div className="onboarding-glow glow-one" /><div className="onboarding-glow glow-two" />
-    <header className="onboarding-nav"><Brand /><span className="onboarding-local"><i /> Dados locais</span></header>
+    <header className="onboarding-nav"><Brand /></header>
     <section className="onboarding-main" aria-live="polite">
       {step === 'choose' && <div className="onboarding-choose">
         <div className="onboarding-copy"><span className="onboarding-overline"><i /> ORGANIZE SEU TEMPO</span><h1>Seu dia,<br /><em>no seu ritmo.</em></h1><p>Adicione ou importe seus compromissos.</p></div>
         <div className="choice-stack" aria-label="Escolha como começar">
           <button className="choice-card primary-choice" onClick={() => setStep('manual')}><span className="choice-icon manual-icon">＋</span><span className="choice-copy"><strong>Preencher manualmente</strong></span><span className="choice-arrow">↗</span></button>
-          <button className="choice-card" onClick={() => { setStep('calendar'); setProvider('google'); }}><span className="choice-icon calendar-icon">▦</span><span className="choice-copy"><strong>Importar calendário</strong><small>Arquivo .ics do Google ou Apple.</small></span><span className="choice-arrow">↗</span></button>
-          <button className="choice-card" onClick={() => { setStep('json'); setProvider('json'); }}><span className="choice-icon json-icon">{'{ }'}</span><span className="choice-copy"><strong>Importar JSON</strong><small>ViaTempo ou modelo Python.</small></span><span className="choice-arrow">↗</span></button>
+          <button className="choice-card" onClick={() => setStep('import')}><span className="choice-icon calendar-icon">↥</span><span className="choice-copy"><strong>Importar arquivo</strong><small>.ics ou JSON, de calendário ou Python.</small></span><span className="choice-arrow">↗</span></button>
           <button className="quiet-link" onClick={() => onComplete({ events: [], locations: [], preferences: emptyPreferences, feedback: [] })}>Quero explorar primeiro <span>→</span></button>
         </div>
       </div>}
@@ -100,14 +99,9 @@ export default function Onboarding({ onComplete }) {
         </form><button className="skip-setup" onClick={() => onComplete({ events: [], locations: [], preferences: emptyPreferences, feedback: [] })}>Planejar depois</button>
       </div>}
 
-      {step === 'calendar' && <div className="setup-card calendar-setup"><button className="back-link" onClick={back}>← <span>Voltar</span></button><div className="setup-progress"><span>CALENDÁRIO</span><div><i /></div></div><h1>Importe sua<br />agenda.</h1><p className="setup-description">Exporte um arquivo .ics do serviço escolhido.</p>
-        {!preview ? <><div className="provider-tabs" role="tablist" aria-label="Serviço de calendário"><button className={provider === 'google' ? 'selected' : ''} role="tab" aria-selected={provider === 'google'} onClick={() => setProvider('google')}><span className="provider-logo google-logo">G</span>Google</button><button className={provider === 'apple' ? 'selected' : ''} role="tab" aria-selected={provider === 'apple'} onClick={() => setProvider('apple')}><span className="provider-logo apple-logo">●</span>Apple</button><button className={provider === 'outlook' ? 'selected' : ''} role="tab" aria-selected={provider === 'outlook'} onClick={() => setProvider('outlook')}><span className="provider-logo outlook-logo">O</span>Outlook</button></div><div className="provider-instructions"><span className="provider-step">{provider === 'google' ? 'GOOGLE CALENDAR' : provider === 'apple' ? 'APPLE CALENDAR' : 'MICROSOFT OUTLOOK'}</span>{provider === 'google' ? <ol><li>Abra <strong>Configurações → Importar e exportar</strong>.</li><li>Exporte e selecione o arquivo <strong>.ics</strong>.</li></ol> : provider === 'apple' ? <ol><li>No Calendário, escolha <strong>Arquivo → Exportar</strong>.</li><li>Selecione o arquivo exportado.</li></ol> : <ol><li>No Outlook clássico, abra o Calendário e escolha <strong>Arquivo → Salvar Calendário</strong>.</li><li>Salve como <strong>.ics</strong> e selecione o arquivo aqui.</li></ol>}{provider === 'outlook' && <p className="provider-note">No Outlook na web, a exportação usa link ICS; confira as opções de compartilhamento antes de publicar. <a href="https://support.microsoft.com/en-us/outlook/export-an-outlook-calendar-to-google-calendar" target="_blank" rel="noreferrer">Ajuda da Microsoft</a></p>}<label className="calendar-upload"><input type="file" accept=".ics,text/calendar" onChange={(e) => { readCalendarFile(e.target.files?.[0], 'ics'); e.target.value = ''; }} /><span>{busy ? 'Lendo agenda…' : 'Escolher arquivo .ics'} <b>↗</b></span></label></div></> : <ImportPreview preview={preview} onCancel={() => setPreview(null)} onConfirm={finishImport} />}
-        {fileError && <p className="form-alert" role="alert">{fileError}</p>}<button className="skip-setup" onClick={() => onComplete({ events: [], locations: [], preferences: emptyPreferences, feedback: [] })}>Não tenho um arquivo agora · planejar depois</button>
-      </div>}
-
-      {step === 'json' && <div className="setup-card json-setup"><button className="back-link" onClick={back}>← <span>Voltar</span></button><div className="setup-progress"><span>ARQUIVO JSON</span><div><i /></div></div><h1>Importe seus<br />compromissos.</h1><p className="setup-description">A prévia mostra os dados antes de importar.</p>
-        {!preview ? <label className="json-drop"><input type="file" accept=".json,application/json" onChange={(e) => { readCalendarFile(e.target.files?.[0], 'json'); e.target.value = ''; }} /><span className="json-drop-symbol">{'{ }'}</span><strong>{busy ? 'Lendo arquivo…' : 'Selecionar arquivo JSON'}</strong><small>JSON do ViaTempo · compatível com a análise em Python</small></label> : <ImportPreview preview={preview} onCancel={() => setPreview(null)} onConfirm={finishImport} />}
-        {fileError && <p className="form-alert" role="alert">{fileError}</p>}<button className="skip-setup" onClick={() => onComplete({ events: [], locations: [], preferences: emptyPreferences, feedback: [] })}>Começar sem importar</button>
+      {step === 'import' && <div className="setup-card import-setup"><button className="back-link" onClick={back}>← <span>Voltar</span></button><div className="setup-progress"><span>IMPORTAR ARQUIVO</span><div><i /></div></div><h1>Traga sua<br />agenda.</h1><p className="setup-description">Escolha um arquivo. O ViaTempo identifica o formato.</p>
+        {!preview ? <label className="file-drop"><input type="file" accept=".ics,.json,text/calendar,application/json" onChange={(e) => { readCalendarFile(e.target.files?.[0]); e.target.value = ''; }} /><span className="file-drop-icon">↥</span><strong>{busy ? 'Lendo arquivo…' : 'Selecionar arquivo'}</strong><small>.ics de Google, Apple ou Outlook · JSON ViaTempo ou Python</small></label> : <ImportPreview preview={preview} onCancel={() => setPreview(null)} onConfirm={finishImport} />}
+        {fileError && <p className="form-alert" role="alert">{fileError}</p>}<button className="skip-setup" onClick={() => onComplete({ events: [], locations: [], preferences: emptyPreferences, feedback: [] })}>Planejar depois</button>
       </div>}
     </section>
     <footer className="onboarding-footer"><span>ViaTempo</span></footer>

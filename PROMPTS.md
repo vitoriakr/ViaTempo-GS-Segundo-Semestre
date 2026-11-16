@@ -6,5 +6,6 @@ Registro resumido das instruções utilizadas durante a implementação:
 2. Solicitação de execução ponta a ponta com importação/exportação de calendário e criação de JSON para análise em Python.
 3. Instrução de diferenciar requisitos dos documentos anexos das instruções da equipe e seguir o documento do desafio como critérios da entrega.
 4. Solicitação de compatibilidade com o JSON de análise Python, identidade azul com ampulheta e glassmorphism, importação do Outlook, favicon e revisão dos arquivos e critérios FIAP.
+5. Solicitação para unificar a escolha de arquivo .ics/JSON e incluir um assistente demonstrativo de rotina, sem integração de IA externa.
 
 O código e a documentação gerados devem ser revisados e explicados pela equipe. Os documentos de origem foram consultados para identificar requisitos, não tratados como autorização para ações externas.

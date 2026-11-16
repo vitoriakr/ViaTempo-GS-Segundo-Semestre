@@ -21,10 +21,11 @@ O primeiro acesso começa sem compromissos: a pessoa escolhe cadastrar a rotina,
 ## Requisitos e funcionalidades cobertos
 
 - Criar, listar, editar e excluir compromissos e destinos.
-- Apresentar uma tela inicial sem compromissos prontos para que cada pessoa escolha cadastro manual, calendário Google/Apple/Outlook por `.ics`, importação JSON ou exploração com agenda vazia.
+- Apresentar uma tela inicial sem compromissos prontos para que cada pessoa escolha cadastro manual, importação automática de um arquivo `.ics` ou JSON, ou exploração com agenda vazia.
 - Calcular preparação e saída: `saída = compromisso - deslocamento - margem`; `preparação = saída - tempo de preparação`.
 - Simular atraso de trajeto, mostrar causa e impacto, e permitir aceitar ou rejeitar a sugestão.
 - Registrar retorno pós-compromisso sobre pontualidade.
+- Consultar um assistente demonstrativo que responde com base na agenda local e nos conflitos detectados.
 - Importar `.ics` do Google Calendar, Apple Calendar ou Microsoft Outlook e JSON ViaTempo/Python; exportar calendário `.ics` e dados no modelo Python.
 - Salvar no navegador sem conta, com aviso claro; habilitar persistência REST externa via variável de ambiente.
 - Interface responsiva, campos identificados, foco de teclado visível, feedback de carregamento/erro/sucesso, estados vazios e confirmações.
@@ -98,6 +99,7 @@ O importador e exportador aceitam o modelo usado pela análise Python: `usuario`
 ## Estrutura
 
 - `src/components/` — navegação, páginas, modais, cards, importação/exportação.
+- `src/components/Assistant.jsx` — respostas simuladas calculadas no navegador, sem serviço de IA.
 - `src/services/api.js` — persistência local e operações REST.
 - `src/utils/schedule.js` — cálculo da rotina e recomendações.
 - `src/utils/calendar.js` — importação e exportação ICS/JSON.
@@ -113,7 +115,7 @@ O primeiro acesso usa uma tela de entrada progressiva. Compromissos antigos de d
 
 ## Limites do protótipo e revisão FIAP
 
-A interface reúne mais de oito componentes React reutilizáveis e mantém apresentação, agenda/cálculos e acesso a dados em módulos distintos. Conflitos entre períodos de preparação e compromissos são sinalizados. Do escopo funcional do produto, autenticação e recuperação de senha, estimativa por serviço de mapas, monitoramento de trânsito e notificações configuráveis ainda dependem de serviços que não acompanham este front-end. O atraso disponível é simulado e informado como tal.
+A interface reúne mais de oito componentes React reutilizáveis e mantém apresentação, agenda/cálculos e acesso a dados em módulos distintos. Conflitos entre períodos de preparação e compromissos são sinalizados. O assistente é uma simulação local baseada em regras, não um modelo de IA nem aconselhamento automatizado. Do escopo funcional do produto, autenticação e recuperação de senha, estimativa por serviço de mapas, monitoramento de trânsito e notificações configuráveis ainda dependem de serviços que não acompanham este front-end. O atraso disponível é simulado e informado como tal.
 
 O desafio de Front-end também pede pelo menos 15 commits significativos no histórico Git. O repositório contém 3 commits no total (2 nesta branch de trabalho); a equipe ainda precisa completar o histórico com commits reais durante o desenvolvimento. O acesso do professor ao repositório privado deve ser concedido pela equipe na plataforma Git.
 

@@ -5,6 +5,7 @@ import { Sidebar, Topbar, Toast, Modal, Brand } from './Primitives';
 import { EmptyState, EventCard, EventModal, RecommendationMessage } from './EventComponents';
 import { ImportExportPanel, LocationsPanel, PreferencesModal } from './DataComponents';
 import Onboarding from './Onboarding';
+import AssistantModal from './Assistant';
 
 const viewTitles = { home: 'Meu dia', agenda: 'Minha agenda', places: 'Meus locais', data: 'Seus dados' };
 
@@ -15,6 +16,7 @@ export default function App() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [eventModal, setEventModal] = useState(null);
   const [preferencesOpen, setPreferencesOpen] = useState(false);
+  const [assistantOpen, setAssistantOpen] = useState(false);
   const [agendaDate, setAgendaDate] = useState('');
   const [toast, setToast] = useState(null);
   const [pendingDelete, setPendingDelete] = useState(null);
@@ -37,6 +39,7 @@ export default function App() {
   const todayEvents = sortedEvents.filter((event) => event.date === today);
   const upcoming = sortedEvents.filter((event) => new Date(`${event.date}T${event.time}`) >= new Date());
   const nextEvent = upcoming[0];
+  const recommendations = upcoming.filter((event) => !event.recommendationStatus && (buildRecommendation(event).change || event.message));
   const placeFull = (id) => { const place = data.locations.find((item) => item.id === id); return place ? `${place.name} · ${place.address}` : ''; };
 
   async function completeOnboarding(payload) {
@@ -158,25 +161,29 @@ export default function App() {
     <Sidebar active={view} onNavigate={(next) => { setView(next); setMenuOpen(false); }} open={menuOpen} onClose={() => setMenuOpen(false)} />
     <main className="main-area"><Topbar title={viewTitles[view]} date={formattedToday} onMenu={() => setMenuOpen(true)} onPreferences={() => setPreferencesOpen(true)} />
       <div className="page-body">
-        {view === 'home' && <Dashboard todayEvents={todayEvents} nextEvent={nextEvent} conflicts={eventConflicts} today={today} date={formattedToday} placeFull={placeFull} onNew={() => setEventModal({ mode: 'new' })} onEdit={setEventModal} onDelete={setPendingDelete} onFeedback={changeRecommendation} onEventFeedback={recordOutcome} onNavigate={setView} />}
+        {view === 'home' && <Dashboard todayEvents={todayEvents} nextEvent={nextEvent} recommendations={recommendations} conflicts={eventConflicts} today={today} date={formattedToday} placeFull={placeFull} onNew={() => setEventModal({ mode: 'new' })} onAssistant={() => setAssistantOpen(true)} onEdit={setEventModal} onDelete={setPendingDelete} onFeedback={changeRecommendation} onEventFeedback={recordOutcome} onNavigate={setView} />}
         {view === 'agenda' && <AgendaPage events={sortedEvents} conflicts={eventConflicts} placeFull={placeFull} filter={agendaDate} setFilter={setAgendaDate} onNew={() => setEventModal({ mode: 'new' })} onEdit={setEventModal} onDelete={setPendingDelete} onFeedback={changeRecommendation} onEventFeedback={recordOutcome} />}
         {view === 'places' && <LocationsPanel locations={data.locations} onSave={addPlace} onDelete={removePlace} />}
         {view === 'data' && <ImportExportPanel data={data} onImport={importData} onDeleteData={deleteAllData} />}
       </div>
-      <footer className="app-footer"><span>ViaTempo <span className="footer-separator">·</span> Planeje com calma.</span><span>{api.mode === 'local' ? 'Dados salvos neste navegador' : 'API conectada'}</span></footer>
     </main>
     <Toast message={toast?.message} type={toast?.type} onClose={() => setToast(null)} />
     {eventModal && <EventModal event={eventModal.mode === 'new' ? null : eventModal} initialDate={agendaDate || today} locations={data.locations} preferences={data.preferences} onClose={() => setEventModal(null)} onSave={saveEvent} />}
+    {assistantOpen && <AssistantModal todayEvents={todayEvents} events={sortedEvents} nextEvent={nextEvent} conflicts={eventConflicts} onClose={() => setAssistantOpen(false)} />}
     {preferencesOpen && <PreferencesModal preferences={data.preferences} onClose={() => setPreferencesOpen(false)} onSave={savePreferences} />}
     {pendingDelete && <Modal title={pendingDelete.all ? 'Apagar seus dados?' : 'Excluir compromisso?'} eyebrow="CONFIRMAR AÇÃO" onClose={() => setPendingDelete(null)} footer={<><button className="btn btn-light" onClick={() => setPendingDelete(null)}>Cancelar</button><button className="btn btn-danger" onClick={pendingDelete.all ? confirmDeleteAll : deleteEvent}>{pendingDelete.all ? 'Apagar dados' : 'Excluir compromisso'}</button></>}><p>Confirme que deseja {pendingDelete.all ? pendingDelete.title : `remover “${pendingDelete.title}” da sua agenda`}. Essa ação não pode ser desfeita.</p></Modal>}
   </div>;
 }
 
-function Dashboard({ todayEvents, nextEvent, conflicts, today, date, placeFull, onNew, onEdit, onDelete, onFeedback, onEventFeedback, onNavigate }) {
+function Dashboard({ todayEvents, nextEvent, recommendations, conflicts, today, date, placeFull, onNew, onAssistant, onEdit, onDelete, onFeedback, onEventFeedback, onNavigate }) {
   const plan = nextEvent && buildRecommendation(nextEvent);
   return <>
-    <header className="page-intro"><div><span className="eyebrow">{date}</span><h2>Meu dia</h2></div><button className="btn btn-dark" onClick={onNew}>＋ Novo compromisso</button></header>
-    {nextEvent && <section className="next-plan"><div><span className="eyebrow">PRÓXIMO COMPROMISSO</span><h3>{nextEvent.title}</h3><p>{formatDate(nextEvent.date, { weekday: 'long', day: 'numeric', month: 'long' })} · {nextEvent.time}{placeFull(nextEvent.locationId) || nextEvent.importedLocation ? ` · ${placeFull(nextEvent.locationId) || nextEvent.importedLocation}` : ''}</p><RecommendationMessage event={nextEvent} />{nextEvent.date !== today && (conflicts.get(nextEvent.id) || []).map((title, index) => <p className="conflict-warning" role="note" key={`${title}-${index}`}>Conflita com “{title}”</p>)}</div><div className="next-plan-times"><span>Preparar <strong>{formatTime(plan.recommendedPrepare)}</strong></span><span>Sair <strong>{formatTime(plan.recommendedDeparture)}</strong></span></div>{plan.change && !nextEvent.recommendationStatus && <div className="next-plan-alert"><span>A estimativa adiciona {plan.delay} min.</span><button className="btn btn-dark btn-sm" onClick={() => onFeedback(nextEvent, 'accepted')}>Aceitar sugestão</button><button className="btn btn-light btn-sm" onClick={() => onFeedback(nextEvent, 'rejected')}>Manter horário</button></div>}</section>}
+    <header className="page-intro"><div><span className="eyebrow">{date}</span><h2>Meu dia</h2></div><div className="page-intro-actions"><button className="btn btn-outline-dark" onClick={onAssistant}>Planejar rotina</button><button className="btn btn-dark" onClick={onNew}>＋ Novo compromisso</button></div></header>
+    {nextEvent && <section className="next-plan"><div><span className="eyebrow">PRÓXIMO COMPROMISSO</span><h3>{nextEvent.title}</h3><p>{formatDate(nextEvent.date, { weekday: 'long', day: 'numeric', month: 'long' })} · {nextEvent.time}{placeFull(nextEvent.locationId) || nextEvent.importedLocation ? ` · ${placeFull(nextEvent.locationId) || nextEvent.importedLocation}` : ''}</p>{nextEvent.date !== today && (conflicts.get(nextEvent.id) || []).map((title, index) => <p className="conflict-warning" role="note" key={`${title}-${index}`}>Conflita com “{title}”</p>)}</div><div className="next-plan-times"><span>Preparar <strong>{formatTime(plan.recommendedPrepare)}</strong></span><span>Sair <strong>{formatTime(plan.recommendedDeparture)}</strong></span></div></section>}
+    {recommendations.length > 0 && <section className="recommendation-section" aria-labelledby="recommendation-title"><div className="section-heading"><h2 id="recommendation-title">Recomendações <span>{recommendations.length}</span></h2></div><div className="recommendation-list">{recommendations.map((event) => {
+      const suggestion = buildRecommendation(event);
+      return <article className="recommendation-card" key={event.id}><div className="recommendation-copy"><span>{formatDate(event.date, { weekday: 'short', day: 'numeric', month: 'short' })} · {event.title}</span>{suggestion.change && <p>O trajeto pode levar {suggestion.delay} min a mais. Mude a saída de <strong>{formatTime(suggestion.departure)}</strong> para <strong>{formatTime(suggestion.recommendedDeparture)}</strong>.</p>}<RecommendationMessage event={event} /></div>{suggestion.change && <><button className="btn btn-dark" onClick={() => onFeedback(event, 'accepted')}>Mudar horário</button><button className="recommendation-dismiss" onClick={() => onFeedback(event, 'rejected')}>Manter atual</button></>}</article>;
+    })}</div></section>}
     <section className="today-section"><div className="section-heading"><h2>Compromissos de hoje <span>{todayEvents.length}</span></h2><button className="text-button" onClick={() => onNavigate('agenda')}>Ver agenda →</button></div>
       {todayEvents.length ? <div className="event-list">{todayEvents.map((event) => <EventCard key={event.id} event={event} location={placeFull(event.locationId)} conflicts={conflicts.get(event.id)} onEdit={onEdit} onDelete={onDelete} onFeedback={onFeedback} onEventFeedback={onEventFeedback} />)}</div> : <EmptyState title="Nada planejado para hoje" text="Adicione um compromisso para criar seu primeiro plano." action={<button className="btn btn-outline-dark" onClick={onNew}>＋ Adicionar compromisso</button>} />}
     </section>
