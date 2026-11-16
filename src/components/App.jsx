@@ -197,8 +197,45 @@ function Dashboard({ todayEvents, nextEvent, recommendations, conflicts, today, 
 }
 
 function AgendaPage({ events, conflicts, placeFull, filter, setFilter, onNew, onEdit, onDelete, onFeedback, onEventFeedback }) {
+  const [mode, setMode] = useState('week');
+  const [anchor, setAnchor] = useState(() => filter || todayISO());
+  const selectedDate = dateFromISO(anchor);
   const shown = filter ? events.filter((event) => event.date === filter) : events;
-  return <><header className="page-intro"><div><span className="eyebrow">SEUS COMPROMISSOS</span><h2>Agenda</h2></div><button className="btn btn-dark" onClick={onNew}>＋ Novo compromisso</button></header><section className="agenda-panel"><div className="agenda-toolbar"><h3>{filter ? formatDate(filter) : `${events.length} compromissos`}</h3><div className="filter-control"><label htmlFor="agenda-date">Filtrar por data</label><input id="agenda-date" type="date" className="form-control" value={filter} onChange={(event) => setFilter(event.target.value)} />{filter && <button className="clear-filter" onClick={() => setFilter('')}>Limpar filtro</button>}</div></div>
-    {shown.length ? <div className="event-list">{shown.map((event) => <EventCard key={event.id} event={event} location={placeFull(event.locationId)} conflicts={conflicts.get(event.id)} onEdit={onEdit} onDelete={onDelete} onFeedback={onFeedback} onEventFeedback={onEventFeedback} />)}</div> : <EmptyState title={filter ? 'Nenhum compromisso nessa data' : 'Sua agenda está vazia'} text={filter ? 'Escolha outra data ou limpe o filtro.' : 'Adicione um compromisso para começar.'} action={<button className="btn btn-outline-dark" onClick={onNew}>＋ Novo compromisso</button>} />}
-  </section></>;
+  const days = mode === 'day' ? [startOfDay(selectedDate)] : weekDays(selectedDate);
+  const periodTitle = mode === 'month'
+    ? selectedDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
+    : mode === 'day' ? formatDate(anchor, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+      : `${formatDate(dateToISO(days[0]), { day: 'numeric', month: 'short' })} – ${formatDate(dateToISO(days[6]), { day: 'numeric', month: 'short', year: 'numeric' })}`;
+  function shiftPeriod(direction) {
+    const next = new Date(selectedDate);
+    if (mode === 'month') next.setMonth(next.getMonth() + direction);
+    else next.setDate(next.getDate() + direction * (mode === 'day' ? 1 : 7));
+    setAnchor(dateToISO(next)); setFilter('');
+  }
+  function jumpToDate(value) { if (!value) return; setAnchor(value); setFilter(value); setMode('day'); }
+  function openEvent(event) { onEdit(event); }
+  return <><header className="page-intro"><div><span className="eyebrow">SEUS COMPROMISSOS</span><h2>Agenda</h2></div><button className="btn btn-dark" onClick={() => onNew()}>＋ Novo compromisso</button></header>
+    <section className="agenda-panel calendar-panel">
+      <div className="calendar-toolbar"><div className="calendar-navigation"><button className="calendar-arrow" aria-label="Período anterior" onClick={() => shiftPeriod(-1)}>‹</button><button className="calendar-arrow" aria-label="Próximo período" onClick={() => shiftPeriod(1)}>›</button><button className="btn btn-outline-dark calendar-today" onClick={() => { setAnchor(todayISO()); setFilter(''); }}>Hoje</button><h3>{periodTitle}</h3></div><div className="calendar-controls"><div className="calendar-modes" role="tablist" aria-label="Visualização da agenda">{[['day','Dia'],['week','Semana'],['month','Mês'],['list','Lista']].map(([value,label])=><button key={value} role="tab" aria-selected={mode===value} className={mode===value?'active':''} onClick={()=>setMode(value)}>{label}</button>)}</div><label className="visually-hidden" htmlFor="agenda-date">Ir para uma data</label><input id="agenda-date" type="date" className="form-control calendar-date-input" value={filter || anchor} onChange={(e)=>jumpToDate(e.target.value)} /></div></div>
+      {mode === 'week' && <WeekCalendar days={days} events={events} onEvent={openEvent} />}
+      {mode === 'day' && <WeekCalendar days={days} events={events} onEvent={openEvent} single />}
+      {mode === 'month' && <MonthCalendar date={selectedDate} events={events} onSelect={(day)=>{setAnchor(dateToISO(day));setFilter(dateToISO(day));setMode('day');}} onEvent={openEvent} />}
+      {mode === 'list' && <div className="calendar-list-view">{filter && <div className="agenda-toolbar"><h3>{formatDate(filter)}</h3><button className="clear-filter" onClick={()=>setFilter('')}>Limpar data</button></div>}{shown.length ? <div className="event-list">{shown.map((event)=><EventCard key={event.id} event={event} location={placeFull(event.locationId)} conflicts={conflicts.get(event.id)} onEdit={onEdit} onDelete={onDelete} onFeedback={onFeedback} onEventFeedback={onEventFeedback} />)}</div> : <EmptyState title={filter?'Nenhum compromisso nessa data':'Sua agenda está vazia'} text={filter?'Escolha outra data ou limpe o filtro.':'Adicione um compromisso para começar.'} action={<button className="btn btn-outline-dark" onClick={()=>onNew()}>＋ Novo compromisso</button>} />}</div>}
+    </section></>;
+}
+
+const dateFromISO = (iso) => { const [year, month, day] = iso.split('-').map(Number); return new Date(year, month - 1, day); };
+const dateToISO = (date) => `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
+const startOfDay = (date) => new Date(date.getFullYear(), date.getMonth(), date.getDate());
+function weekDays(date) { const start=startOfDay(date); start.setDate(start.getDate()-((start.getDay()+6)%7)); return Array.from({length:7},(_,index)=>{const day=new Date(start);day.setDate(start.getDate()+index);return day;}); }
+
+function WeekCalendar({ days, events, onEvent, single=false }) {
+  const startHour = 6, endHour = 23, hourHeight = 58;
+  const today = todayISO();
+  return <div className={`week-calendar${single?' single-day':''}`}><div className="week-calendar-head"><div className="week-time-gutter" />{days.map((day)=><div className={`week-day-head${dateToISO(day)===today?' is-today':''}`} key={dateToISO(day)}><span>{day.toLocaleDateString('pt-BR',{weekday:'short'}).replace('.','')}</span><strong>{day.getDate()}</strong></div>)}</div><div className="week-calendar-scroll"><div className="week-calendar-body"><div className="week-time-gutter">{Array.from({length:endHour-startHour},(_,i)=><span key={i} style={{top:i*hourHeight-7}}>{String(startHour+i).padStart(2,'0')}:00</span>)}</div>{days.map((day)=><div className={`week-day-column${dateToISO(day)===today?' is-today':''}`} key={dateToISO(day)}>{Array.from({length:endHour-startHour},(_,i)=><div className="week-hour-line" style={{top:i*hourHeight}} key={i} />)}{events.filter((event)=>event.date===dateToISO(day)).map((event)=>{const [hour,minute]=event.time.split(':').map(Number);const top=((hour-startHour)+(minute/60))*hourHeight;const height=hourHeight;return <button className="week-event" key={event.id} style={{top:`${Math.max(0,top)}px`,height:`${height-4}px`}} onClick={()=>onEvent(event)} title={`${event.title}, ${event.time}`}><strong>{event.time}</strong><span>{event.title}</span></button>;})}</div>)}</div></div></div>;
+}
+
+function MonthCalendar({ date, events, onSelect, onEvent }) {
+  const first=new Date(date.getFullYear(),date.getMonth(),1);const offset=(first.getDay()+6)%7;const start=new Date(first);start.setDate(first.getDate()-offset);const days=Array.from({length:42},(_,i)=>{const day=new Date(start);day.setDate(start.getDate()+i);return day;});
+  return <div className="month-calendar"><div className="month-weekdays">{['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'].map((day)=><span key={day}>{day}</span>)}</div><div className="month-grid">{days.map((day)=>{const iso=dateToISO(day);const dayEvents=events.filter((event)=>event.date===iso).sort((a,b)=>a.time.localeCompare(b.time));return <div className={`month-cell${day.getMonth()!==date.getMonth()?' outside':''}${iso===todayISO()?' is-today':''}`} key={iso}><button className="month-date" onClick={()=>onSelect(day)} aria-label={`Ver ${formatDate(iso)} em detalhe`}>{day.getDate()}</button><div className="month-event-list">{dayEvents.slice(0,3).map((event)=><button className="month-event" key={event.id} onClick={()=>onEvent(event)}><time>{event.time}</time><span>{event.title}</span></button>)}{dayEvents.length>3&&<button className="month-more" onClick={()=>onSelect(day)}>+{dayEvents.length-3} mais</button>}</div></div>;})}</div></div>;
 }
