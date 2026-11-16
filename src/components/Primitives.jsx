@@ -4,7 +4,7 @@ const iconShapes = {
   home: <><path d="m3.5 10 8.5-6.5 8.5 6.5" /><path d="M5.5 9v11h13V9M9.5 20v-6h5v6" /></>,
   calendar: <><rect x="3.5" y="5.5" width="17" height="16" rx="2.5" /><path d="M7.5 3.5v4M16.5 3.5v4M3.5 10h17" /><path d="M8 14h.01M12 14h.01M16 14h.01M8 17.5h.01M12 17.5h.01" /></>,
   places: <><path d="M19 10c0 5-7 11-7 11S5 15 5 10a7 7 0 1 1 14 0Z" /><circle cx="12" cy="10" r="2.2" /></>,
-  files: <><path d="M7 3.5h7l4 4V13M14 3.5v4h4" /><path d="M7 13v7.5h10V16M4 10v4m0 0-2-2m2 2 2-2M21 11v4m0 0-2-2m2 2 2-2" /></>,
+  files: <><path d="M9 3.5h5l4 4V15M14 3.5v4h4M9 3.5v17h9" /><path d="M3 10h5m-2-2 2 2-2 2M21 16h-5m2-2-2 2 2 2" /></>,
   menu: <><path d="M4 6h16M4 12h16M4 18h16" /></>,
 };
 
