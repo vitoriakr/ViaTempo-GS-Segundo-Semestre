@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { api, makeId } from '../services/api';
-import { todayISO, buildRecommendation, formatDate, formatTime } from '../utils/schedule';
+import { todayISO, buildRecommendation, findScheduleConflicts, formatDate, formatTime } from '../utils/schedule';
 import { Sidebar, Topbar, Toast, Modal, Brand } from './Primitives';
-import { EmptyState, EventCard, EventModal } from './EventComponents';
+import { EmptyState, EventCard, EventModal, RecommendationMessage } from './EventComponents';
 import { ImportExportPanel, LocationsPanel, PreferencesModal } from './DataComponents';
 import Onboarding from './Onboarding';
 
@@ -33,6 +33,7 @@ export default function App() {
   }, [toast]);
 
   const sortedEvents = useMemo(() => [...data.events].sort((a, b) => `${a.date}T${a.time}`.localeCompare(`${b.date}T${b.time}`)), [data.events]);
+  const eventConflicts = useMemo(() => findScheduleConflicts(sortedEvents), [sortedEvents]);
   const todayEvents = sortedEvents.filter((event) => event.date === today);
   const upcoming = sortedEvents.filter((event) => new Date(`${event.date}T${event.time}`) >= new Date());
   const nextEvent = upcoming[0];
@@ -157,8 +158,8 @@ export default function App() {
     <Sidebar active={view} onNavigate={(next) => { setView(next); setMenuOpen(false); }} open={menuOpen} onClose={() => setMenuOpen(false)} />
     <main className="main-area"><Topbar title={viewTitles[view]} date={formattedToday} onMenu={() => setMenuOpen(true)} onPreferences={() => setPreferencesOpen(true)} />
       <div className="page-body">
-        {view === 'home' && <Dashboard todayEvents={todayEvents} nextEvent={nextEvent} date={formattedToday} placeFull={placeFull} onNew={() => setEventModal({ mode: 'new' })} onEdit={setEventModal} onDelete={setPendingDelete} onFeedback={changeRecommendation} onEventFeedback={recordOutcome} onNavigate={setView} />}
-        {view === 'agenda' && <AgendaPage events={sortedEvents} placeFull={placeFull} filter={agendaDate} setFilter={setAgendaDate} onNew={() => setEventModal({ mode: 'new' })} onEdit={setEventModal} onDelete={setPendingDelete} onFeedback={changeRecommendation} onEventFeedback={recordOutcome} />}
+        {view === 'home' && <Dashboard todayEvents={todayEvents} nextEvent={nextEvent} conflicts={eventConflicts} today={today} date={formattedToday} placeFull={placeFull} onNew={() => setEventModal({ mode: 'new' })} onEdit={setEventModal} onDelete={setPendingDelete} onFeedback={changeRecommendation} onEventFeedback={recordOutcome} onNavigate={setView} />}
+        {view === 'agenda' && <AgendaPage events={sortedEvents} conflicts={eventConflicts} placeFull={placeFull} filter={agendaDate} setFilter={setAgendaDate} onNew={() => setEventModal({ mode: 'new' })} onEdit={setEventModal} onDelete={setPendingDelete} onFeedback={changeRecommendation} onEventFeedback={recordOutcome} />}
         {view === 'places' && <LocationsPanel locations={data.locations} onSave={addPlace} onDelete={removePlace} />}
         {view === 'data' && <ImportExportPanel data={data} onImport={importData} onDeleteData={deleteAllData} />}
       </div>
@@ -171,20 +172,20 @@ export default function App() {
   </div>;
 }
 
-function Dashboard({ todayEvents, nextEvent, date, placeFull, onNew, onEdit, onDelete, onFeedback, onEventFeedback, onNavigate }) {
+function Dashboard({ todayEvents, nextEvent, conflicts, today, date, placeFull, onNew, onEdit, onDelete, onFeedback, onEventFeedback, onNavigate }) {
   const plan = nextEvent && buildRecommendation(nextEvent);
   return <>
     <header className="page-intro"><div><span className="eyebrow">{date}</span><h2>Meu dia</h2></div><button className="btn btn-dark" onClick={onNew}>＋ Novo compromisso</button></header>
-    {nextEvent && <section className="next-plan"><div><span className="eyebrow">PRÓXIMO COMPROMISSO</span><h3>{nextEvent.title}</h3><p>{formatDate(nextEvent.date, { weekday: 'long', day: 'numeric', month: 'long' })} · {nextEvent.time}{placeFull(nextEvent.locationId) || nextEvent.importedLocation ? ` · ${placeFull(nextEvent.locationId) || nextEvent.importedLocation}` : ''}</p>{nextEvent.message && <p className="event-message">{nextEvent.message}</p>}</div><div className="next-plan-times"><span>Preparar <strong>{formatTime(plan.recommendedPrepare)}</strong></span><span>Sair <strong>{formatTime(plan.recommendedDeparture)}</strong></span></div>{plan.change && !nextEvent.recommendationStatus && <div className="next-plan-alert"><span>A estimativa adiciona {plan.delay} min.</span><button className="btn btn-dark btn-sm" onClick={() => onFeedback(nextEvent, 'accepted')}>Aceitar sugestão</button><button className="btn btn-light btn-sm" onClick={() => onFeedback(nextEvent, 'rejected')}>Manter horário</button></div>}</section>}
+    {nextEvent && <section className="next-plan"><div><span className="eyebrow">PRÓXIMO COMPROMISSO</span><h3>{nextEvent.title}</h3><p>{formatDate(nextEvent.date, { weekday: 'long', day: 'numeric', month: 'long' })} · {nextEvent.time}{placeFull(nextEvent.locationId) || nextEvent.importedLocation ? ` · ${placeFull(nextEvent.locationId) || nextEvent.importedLocation}` : ''}</p><RecommendationMessage event={nextEvent} />{nextEvent.date !== today && (conflicts.get(nextEvent.id) || []).map((title, index) => <p className="conflict-warning" role="note" key={`${title}-${index}`}>Conflita com “{title}”</p>)}</div><div className="next-plan-times"><span>Preparar <strong>{formatTime(plan.recommendedPrepare)}</strong></span><span>Sair <strong>{formatTime(plan.recommendedDeparture)}</strong></span></div>{plan.change && !nextEvent.recommendationStatus && <div className="next-plan-alert"><span>A estimativa adiciona {plan.delay} min.</span><button className="btn btn-dark btn-sm" onClick={() => onFeedback(nextEvent, 'accepted')}>Aceitar sugestão</button><button className="btn btn-light btn-sm" onClick={() => onFeedback(nextEvent, 'rejected')}>Manter horário</button></div>}</section>}
     <section className="today-section"><div className="section-heading"><h2>Compromissos de hoje <span>{todayEvents.length}</span></h2><button className="text-button" onClick={() => onNavigate('agenda')}>Ver agenda →</button></div>
-      {todayEvents.length ? <div className="event-list">{todayEvents.map((event) => <EventCard key={event.id} event={event} location={placeFull(event.locationId)} onEdit={onEdit} onDelete={onDelete} onFeedback={onFeedback} onEventFeedback={onEventFeedback} />)}</div> : <EmptyState title="Nada planejado para hoje" text="Adicione um compromisso para criar seu primeiro plano." action={<button className="btn btn-outline-dark" onClick={onNew}>＋ Adicionar compromisso</button>} />}
+      {todayEvents.length ? <div className="event-list">{todayEvents.map((event) => <EventCard key={event.id} event={event} location={placeFull(event.locationId)} conflicts={conflicts.get(event.id)} onEdit={onEdit} onDelete={onDelete} onFeedback={onFeedback} onEventFeedback={onEventFeedback} />)}</div> : <EmptyState title="Nada planejado para hoje" text="Adicione um compromisso para criar seu primeiro plano." action={<button className="btn btn-outline-dark" onClick={onNew}>＋ Adicionar compromisso</button>} />}
     </section>
   </>;
 }
 
-function AgendaPage({ events, placeFull, filter, setFilter, onNew, onEdit, onDelete, onFeedback, onEventFeedback }) {
+function AgendaPage({ events, conflicts, placeFull, filter, setFilter, onNew, onEdit, onDelete, onFeedback, onEventFeedback }) {
   const shown = filter ? events.filter((event) => event.date === filter) : events;
   return <><header className="page-intro"><div><span className="eyebrow">SEUS COMPROMISSOS</span><h2>Agenda</h2></div><button className="btn btn-dark" onClick={onNew}>＋ Novo compromisso</button></header><section className="agenda-panel"><div className="agenda-toolbar"><h3>{filter ? formatDate(filter) : `${events.length} compromissos`}</h3><div className="filter-control"><label htmlFor="agenda-date">Filtrar por data</label><input id="agenda-date" type="date" className="form-control" value={filter} onChange={(event) => setFilter(event.target.value)} />{filter && <button className="clear-filter" onClick={() => setFilter('')}>Limpar filtro</button>}</div></div>
-    {shown.length ? <div className="event-list">{shown.map((event) => <EventCard key={event.id} event={event} location={placeFull(event.locationId)} onEdit={onEdit} onDelete={onDelete} onFeedback={onFeedback} onEventFeedback={onEventFeedback} />)}</div> : <EmptyState title={filter ? 'Nenhum compromisso nessa data' : 'Sua agenda está vazia'} text={filter ? 'Escolha outra data ou limpe o filtro.' : 'Adicione um compromisso para começar.'} action={<button className="btn btn-outline-dark" onClick={onNew}>＋ Novo compromisso</button>} />}
+    {shown.length ? <div className="event-list">{shown.map((event) => <EventCard key={event.id} event={event} location={placeFull(event.locationId)} conflicts={conflicts.get(event.id)} onEdit={onEdit} onDelete={onDelete} onFeedback={onFeedback} onEventFeedback={onEventFeedback} />)}</div> : <EmptyState title={filter ? 'Nenhum compromisso nessa data' : 'Sua agenda está vazia'} text={filter ? 'Escolha outra data ou limpe o filtro.' : 'Adicione um compromisso para começar.'} action={<button className="btn btn-outline-dark" onClick={onNew}>＋ Novo compromisso</button>} />}
   </section></>;
 }

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { calculateSchedule, buildRecommendation, formatDate, formatTime } from '../utils/schedule';
 import { Modal } from './Primitives';
 
-export function EventCard({ event, location, onEdit, onDelete, onFeedback, onEventFeedback }) {
+export function EventCard({ event, location, conflicts = [], onEdit, onDelete, onFeedback, onEventFeedback }) {
   const plan = calculateSchedule(event);
   const suggestion = buildRecommendation(event);
   const decided = Boolean(event.recommendationStatus);
@@ -16,7 +16,8 @@ export function EventCard({ event, location, onEdit, onDelete, onFeedback, onEve
     <div className="event-actions"><button className="icon-button" onClick={() => onEdit(event)} aria-label={`Editar ${event.title}`}>Editar</button><button className="icon-button" onClick={() => onDelete(event)} aria-label={`Excluir ${event.title}`}>Excluir</button></div>
     <details className="event-details"><summary>Ver planejamento <span>Preparar {formatTime(plan.prepare)} · sair {formatTime(plan.departure)}</span></summary>
       <div className="event-details-body"><div className="plan-facts"><span>Preparação <strong>{event.prepMinutes} min</strong></span><span>Deslocamento <strong>{event.travelMinutes} min</strong></span><span>Margem <strong>{event.bufferMinutes} min</strong></span></div>
-        {event.message && <p className="event-message">{event.message}</p>}
+        {conflicts.map((title, index) => <p className="conflict-warning" role="note" key={`${title}-${index}`}>Conflita com “{title}”</p>)}
+        <RecommendationMessage event={event} />
         {suggestion.change && !decided && <div className="suggestion"><p>A estimativa cadastrada adiciona {suggestion.delay} min. Sair às <strong>{formatTime(suggestion.recommendedDeparture)}</strong>?</p><button className="btn btn-dark btn-sm" onClick={() => onFeedback(event, 'accepted')}>Aceitar</button><button className="btn btn-light btn-sm" onClick={() => onFeedback(event, 'rejected')}>Manter horário</button></div>}
         {decided && <p className="inline-status">{event.recommendationStatus === 'accepted' ? 'Sugestão aceita' : 'Horário original mantido'}</p>}
         {isPast && !event.userFeedback && <div className="event-outcome"><span>Você chegou no horário?</span><button onClick={() => onEventFeedback(event, 'on-time')}>Sim</button><button onClick={() => onEventFeedback(event, 'late')}>Não</button></div>}
@@ -24,6 +25,14 @@ export function EventCard({ event, location, onEdit, onDelete, onFeedback, onEve
       </div>
     </details>
   </article>;
+}
+
+export function RecommendationMessage({ event }) {
+  if (!event.message) return null;
+  const label = event.urgency === 'vermelho' ? 'Atenção' : event.urgency === 'verde' ? 'Tranquilo' : '';
+  return <p className={`event-message ${event.urgency === 'vermelho' ? 'is-critical' : ''}`}>
+    {label && <strong>{label}: </strong>}{event.message}
+  </p>;
 }
 
 const blankEvent = (preferences, date) => ({ title: '', date, time: '', locationId: '', travelMinutes: 30, prepMinutes: preferences.defaultPrepMinutes ?? 30, bufferMinutes: preferences.defaultBufferMinutes ?? 15, trafficDelay: 0, alertThreshold: preferences.alertThreshold ?? 5 });

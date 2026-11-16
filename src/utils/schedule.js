@@ -33,3 +33,29 @@ export function buildRecommendation(event) {
     change,
   };
 }
+
+export function findScheduleConflicts(events) {
+  const conflicts = new Map();
+  const byDate = events.reduce((groups, event) => {
+    groups[event.date] ||= [];
+    groups[event.date].push(event);
+    return groups;
+  }, {});
+
+  Object.values(byDate).forEach((dayEvents) => {
+    const scheduled = dayEvents.map((event) => {
+      const schedule = calculateSchedule(event);
+      return { event, start: schedule.prepare.getTime(), end: schedule.appointment.getTime() };
+    }).sort((a, b) => a.start - b.start);
+
+    scheduled.forEach((current, index) => {
+      scheduled.slice(index + 1).forEach((next) => {
+        if (next.start >= current.end) return;
+        conflicts.set(current.event.id, [...(conflicts.get(current.event.id) || []), next.event.title]);
+        conflicts.set(next.event.id, [...(conflicts.get(next.event.id) || []), current.event.title]);
+      });
+    });
+  });
+
+  return conflicts;
+}
