@@ -1,6 +1,6 @@
 {
   "nome": "Marina",
-  "preparacao_padrao": 45,
+  "preparacao_padrao": 50,
   "margem_padrao": 10,
-  "limite_variacao": 5
+  "limite_variacao": 10
 }

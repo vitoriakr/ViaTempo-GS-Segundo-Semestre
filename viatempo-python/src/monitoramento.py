@@ -4,7 +4,7 @@ from datetime import datetime
 from src.armazenamento import ler_json, salvar_json
 from src.horarios import minutos_para_texto, texto_para_minutos
 from src.modelo import atraso_acidente
-from src.rotina import buscar_local, calcular_saida
+from src.rotina import calcular_saida
 from src.trajetos import medias_por_horario
 
 ATRASO_MAXIMO_ACIDENTE = 20

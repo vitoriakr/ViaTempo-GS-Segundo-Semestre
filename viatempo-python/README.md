@@ -29,7 +29,7 @@ O ViaTempo é um programa de terminal que:
 5. **Simula mudanças no trânsito** (acidente, chuva ou obra). Se a mudança passar do limite do usuário, recalcula e mostra uma recomendação explicando a causa, o impacto e o novo horário. O usuário decide se aceita, rejeita ou ajusta.
 6. **Detecta conflitos** entre compromissos do mesmo dia.
 7. **Gera um relatório de dados** com os melhores e piores horários, o impacto da chuva e dos acidentes e a pontualidade de quem segue ou não as recomendações.
-8. **Exporta o plano para o front-end** em `data/plano.json`, que é lido pela tela "Meu Dia" da plataforma.
+8. **Exporta o plano para o front-end** em `data/meu_dia.json`, que é lido pela tela "Meu Dia" da plataforma.
 
 ### Como os dados viram decisão
 

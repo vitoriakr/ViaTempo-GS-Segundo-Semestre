@@ -1,0 +1,19 @@
+{
+  "usuario": "Marina",
+  "data": "2026-11-25",
+  "compromissos": [
+    {
+      "id": 5,
+      "titulo": "Chamada com o orientador",
+      "horario": "10:30",
+      "destino": null,
+      "saida": null,
+      "despertar": "10:25",
+      "trajeto_min": 0,
+      "fonte": null,
+      "urgencia": "verde",
+      "mensagem": "Compromisso sem deslocamento."
+    }
+  ],
+  "alerta": null
+}

@@ -1,63 +1,18 @@
-"""ViaTempo – Seu caminho, no tempo certo.
-
-Menu principal da aplicação. Executar com:  python main.py
+"""Menu principal da aplicação. Executar com:  python main.py
 """
 from datetime import date, datetime
 
 from src.analise import imprimir_relatorio
-from src.armazenamento import adicionar_linha_csv, ler_json, salvar_json
-from src.horarios import horario_valido, texto_para_minutos
+from src.armazenamento import PASTA_SAIDA, adicionar_linha_csv, ler_json, salvar_json
+from src.entrada import escolher_opcao, ler_data, ler_horario, ler_inteiro, ler_texto
+from src.horarios import texto_para_minutos
 from src.monitoramento import recalcular, registrar_decisao
-from src.rotina import calcular_plano, verificar_conflitos
+from src.rotina import buscar_local, calcular_plano, verificar_conflitos
 from src.trajetos import carregar_historico
 
+TIPOS_DE_EVENTO = {"1": "acidente", "2": "chuva", "3": "obra"}
+DECISOES = {"1": "Aceitar", "2": "Rejeitar", "3": "Ajustar"}
 
-# ---------------------------- leitura segura do teclado ----------------------------
-def ler_texto(pergunta, obrigatorio=True):
-    while True:
-        resposta = input(pergunta).strip()
-        if resposta or not obrigatorio:
-            return resposta
-        print("  Campo obrigatório.")
-
-
-def ler_inteiro(pergunta, minimo=0, maximo=600, vazio_permitido=False):
-    while True:
-        resposta = input(pergunta).strip()
-        if vazio_permitido and resposta == "":
-            return None
-        if resposta.isdigit() and minimo <= int(resposta) <= maximo:
-            return int(resposta)
-        print(f"  Digite um número entre {minimo} e {maximo}.")
-
-
-def ler_horario(pergunta):
-    while True:
-        resposta = input(pergunta).strip()
-        if horario_valido(resposta):
-            return resposta
-        print("  Use o formato HH:MM (ex.: 08:00).")
-
-
-def ler_data(pergunta, padrao):
-    while True:
-        resposta = input(f"{pergunta} [Enter = {padrao}]: ").strip() or padrao
-        try:
-            datetime.strptime(resposta, "%Y-%m-%d")
-            return resposta
-        except ValueError:
-            print("  Use o formato AAAA-MM-DD (ex.: 2026-11-19).")
-
-
-def escolher_opcao(pergunta, opcoes):
-    while True:
-        resposta = input(pergunta).strip()
-        if resposta in opcoes:
-            return resposta
-        print(f"  Opção inválida. Escolha entre: {', '.join(opcoes)}")
-
-
-# ---------------------------------- funções do menu ----------------------------------
 def proxima_data(compromissos):
     hoje = date.today().isoformat()
     futuras = sorted(c["data"] for c in compromissos if c["data"] >= hoje)
@@ -70,8 +25,8 @@ def compromissos_da_data(compromissos, data):
 
 
 def mostrar_plano(plano):
-    print(f"\n  {plano['compromisso']}  {plano['titulo']}" +
-          (f" ({plano['destino']})" if plano["destino"] else " (sem deslocamento)"))
+    destino = f" ({plano['destino']})" if plano["destino"] else " (sem deslocamento)"
+    print(f"\n  {plano['compromisso']}  {plano['titulo']}{destino}")
     print(f"     Começar a se preparar: {plano['despertar'] or '--'}")
     if plano["destino"]:
         print(f"     Sair de casa:          {plano['saida'] or '--'}   "
@@ -79,58 +34,93 @@ def mostrar_plano(plano):
     print(f"     [{plano['urgencia'].upper()}] {plano['mensagem']}")
 
 
-def salvar_plano_para_front(plano, usuario, alerta=None):
-    """Gera data/plano.json, lido pela tela 'Meu Dia' do front-end."""
-    salvar_json("plano.json", {
-        "usuario": usuario["nome"], "compromisso": plano["compromisso"],
-        "saida": plano["saida"], "despertar": plano["despertar"],
-        "trajeto_min": plano["trajeto_min"], "urgencia": plano["urgencia"],
-        "mensagem": plano["mensagem"], "alerta": alerta})
-
-
+def salvar_plano_para_front(planos, usuario, data, alerta=None):
+    """Gera saida/meu_dia.json com todos os compromissos do dia."""
+    salvar_json("meu_dia.json", {
+        "usuario": usuario["nome"],
+        "data": data,
+        "compromissos": [
+            {
+                "id": plano["id"],
+                "titulo": plano["titulo"],
+                "horario": plano["compromisso"],
+                "destino": plano["destino"],
+                "saida": plano["saida"],
+                "despertar": plano["despertar"],
+                "trajeto_min": plano["trajeto_min"],
+                "fonte": plano.get("fonte"),
+                "urgencia": plano["urgencia"],
+                "mensagem": plano["mensagem"]
+            }
+            for plano in planos
+        ],
+        "alerta": alerta
+    }, PASTA_SAIDA)
+# ---------------------------------- opções do menu ----------------------------------
 def ver_meu_dia(dados):
     data = ler_data("Data", proxima_data(dados["compromissos"]))
     do_dia = compromissos_da_data(dados["compromissos"], data)
     if not do_dia:
-        print("\nNenhum compromisso nessa data.")
+        print("Nenhum compromisso nessa data.")
+        salvar_plano_para_front([], dados["usuario"], data)
         return
 
     print(f"\n===== MEU DIA – {data} =====")
-    planos = [calcular_plano(c, dados["usuario"], dados["locais"], dados["historico"]) for c in do_dia]
+    planos = calcular_plano(c, dados["usuario"], dados["locais"], dados["historico"])
     for plano in planos:
         mostrar_plano(plano)
 
     for alerta in verificar_conflitos(do_dia):
-        print(f"\n  ⚠ Conflito: {alerta}")
+        print(f"\n  [!] Conflito: {alerta}")
 
-    com_saida = [p for p in planos if p["saida"]]
-    if com_saida:
-        salvar_plano_para_front(com_saida[0], dados["usuario"])
-        print("\n  (Plano do primeiro deslocamento salvo em data/plano.json para o front-end)")
+    salvar_plano_para_front(planos, dados["usuario"], data)
+    print("\n  (Todos os compromissos foram salvos em saida/meu_dia.json para o front-end)")
 
 
 def cadastrar_compromisso(dados):
     print("\n--- Novo compromisso ---")
+
     titulo = ler_texto("Título: ")
     data = ler_data("Data", date.today().isoformat())
     horario = ler_horario("Horário (HH:MM): ")
-    nomes = [local["nome"] for local in dados["locais"]]
-    print(f"Locais cadastrados: {', '.join(nomes)}")
     destino = ler_texto("Destino (Enter se não precisar se deslocar): ", obrigatorio=False)
-    if destino and destino.lower() not in [n.lower() for n in nomes]:
-        print("  Local não cadastrado. Cadastre-o primeiro na opção 4.")
-        return
+
+    if destino:
+        local = buscar_local(dados["locais"], destino)
+
+        if not local:
+            print(f"\nO local '{destino}' ainda não está cadastrado.")
+
+            resposta = input("Deseja cadastrar esse local? (s/n): ").strip().lower()
+
+            if resposta == "s":
+                dados["locais"].append({
+                    "nome": destino.strip(),
+                    "tempo_base": 30
+                })
+
+                salvar_json("locais.json", dados["locais"])
+                print("Local cadastrado com sucesso!")
+
     duracao = ler_inteiro("Duração em minutos: ", 5, 720)
     preparacao = ler_inteiro("Tempo de preparação (Enter = padrão): ", 0, 240, True)
     margem = ler_inteiro("Margem de segurança (Enter = padrão): ", 0, 120, True)
 
     novo_id = max((c["id"] for c in dados["compromissos"]), default=0) + 1
-    dados["compromissos"].append({"id": novo_id, "titulo": titulo, "data": data, "horario": horario,
-                                  "destino": destino or None, "duracao_min": duracao,
-                                  "preparacao": preparacao, "margem": margem})
-    salvar_json("compromissos.json", dados["compromissos"])
-    print(f"Compromisso '{titulo}' salvo!")
 
+    dados["compromissos"].append({
+        "id": novo_id,
+        "titulo": titulo,
+        "data": data,
+        "horario": horario,
+        "destino": destino.strip() or None,
+        "duracao_min": duracao,
+        "preparacao": preparacao,
+        "margem": margem
+    })
+
+    salvar_json("compromissos.json", dados["compromissos"])
+    print(f"\nCompromisso '{titulo}' salvo com sucesso!")
 
 def listar_e_excluir(dados):
     if not dados["compromissos"]:
@@ -154,7 +144,7 @@ def listar_e_excluir(dados):
 def cadastrar_local(dados):
     print("\n--- Novo local frequente ---")
     nome = ler_texto("Nome do local (ex.: Academia): ")
-    if any(l["nome"].lower() == nome.lower() for l in dados["locais"]):
+    if buscar_local(dados["locais"], nome):
         print("  Esse local já existe.")
         return
     tempo_base = ler_inteiro("Tempo de trajeto SEM trânsito, em minutos: ", 1, 300)
@@ -174,33 +164,41 @@ def configurar(dados):
     print("Configurações salvas!")
 
 
-def simular_mudanca(dados):
+def escolher_compromisso_com_destino(dados):
+    """Pergunta a data e o ID de um compromisso com deslocamento. Devolve None se não houver."""
     data = ler_data("Data do compromisso", proxima_data(dados["compromissos"]))
-    do_dia = [c for c in compromissos_da_data(dados["compromissos"], data) if c.get("destino")]
-    if not do_dia:
+    com_destino = [c for c in compromissos_da_data(dados["compromissos"], data) if c.get("destino")]
+    if not com_destino:
         print("\nNenhum compromisso com deslocamento nessa data.")
-        return
-    for c in do_dia:
+        return None
+    for c in com_destino:
         print(f"  [{c['id']}] {c['horario']} {c['titulo']}")
-    ids = [str(c["id"]) for c in do_dia]
-    id_escolhido = escolher_opcao("ID do compromisso: ", ids)
-    escolhido = next(c for c in do_dia if str(c["id"]) == id_escolhido)
-    plano = calcular_plano(escolhido, dados["usuario"], dados["locais"], dados["historico"])
+    id_escolhido = escolher_opcao("ID do compromisso: ", [str(c["id"]) for c in com_destino])
+    return next(c for c in com_destino if str(c["id"]) == id_escolhido)
+
+
+def simular_mudanca(dados):
+    escolhido = escolher_compromisso_com_destino(dados)
+    if escolhido is None:
+        return
+    plano = calcular_plano(c, dados["usuario"], dados["locais"], dados["historico"])
     if not plano["saida"]:
         print("  Esse compromisso não tem horário de saída viável.")
         return
 
     print("\nO que aconteceu?  [1] Acidente  [2] Chuva forte  [3] Obra")
-    tipo = {"1": "acidente", "2": "chuva", "3": "obra"}[escolher_opcao("Escolha: ", ["1", "2", "3"])]
+    tipo = TIPOS_DE_EVENTO[escolher_opcao("Escolha: ", list(TIPOS_DE_EVENTO))]
     minutos = ler_inteiro("Há quantos minutos foi o acidente? ", 0, 180) if tipo == "acidente" else 0
 
-    recomendacao = recalcular(plano, tipo, dados["usuario"], dados["locais"], dados["historico"], minutos)
+    recomendacao = recalcular(
+    plano, tipo, dados["usuario"],
+    dados["locais"], dados["historico"], minutos)
     if recomendacao is None:
         print(f"\nA mudança ainda é menor que {dados['usuario']['limite_variacao']} min. "
               "Nenhum aviso enviado (RN03).")
         return
 
-    print(f"\n🔔 {recomendacao['causa']} ({recomendacao['impacto']})")
+    print(f"\n[!] {recomendacao['causa']} ({recomendacao['impacto']})")
     if not recomendacao["nova_saida"]:
         print(f"   {recomendacao['mensagem']}")
         return
@@ -209,8 +207,7 @@ def simular_mudanca(dados):
     print(f"   Agora: sair às {recomendacao['nova_saida']} e começar a se preparar às "
           f"{recomendacao['novo_despertar']}")
 
-    decisao = {"1": "Aceitar", "2": "Rejeitar", "3": "Ajustar"}[
-        escolher_opcao("[1] Aceitar  [2] Rejeitar  [3] Ajustar: ", ["1", "2", "3"])]
+    decisao = DECISOES[escolher_opcao("[1] Aceitar  [2] Rejeitar  [3] Ajustar: ", list(DECISOES))]
     if decisao == "Ajustar":
         extra = ler_inteiro("Quantos minutos a mais de margem você quer? ", 0, 60)
         escolhido["margem"] = plano["margem"] + extra
@@ -241,19 +238,22 @@ def registrar_feedback(dados):
 
 
 def relatorio(dados):
-    nomes = [l["nome"] for l in dados["locais"]]
-    print(f"Destinos: {', '.join(nomes)}")
+    print(f"Destinos: {', '.join(l['nome'] for l in dados['locais'])}")
     destino = ler_texto("Analisar qual destino? ")
-    imprimir_relatorio(dados["historico"], next((n for n in nomes if n.lower() == destino.lower()), destino))
+    local = buscar_local(dados["locais"], destino)
+    imprimir_relatorio(dados["historico"], local["nome"] if local else destino)
 
 
 # -------------------------------------- menu --------------------------------------
 def carregar_dados():
-    return {"usuario": ler_json("usuario.json", {"nome": "Usuário", "preparacao_padrao": 45,
-                                                  "margem_padrao": 10, "limite_variacao": 5}),
-            "locais": ler_json("locais.json", []),
-            "compromissos": ler_json("compromissos.json", []),
-            "historico": carregar_historico()}
+    padrao_usuario = {"nome": "Usuário", "preparacao_padrao": 45,
+                      "margem_padrao": 10, "limite_variacao": 5}
+    return {
+    "usuario": ler_json("usuario.json", padrao_usuario),
+    "locais": ler_json("locais.json", []),
+    "compromissos": ler_json("compromissos.json", []),
+    "historico": carregar_historico()
+}
 
 
 def main():

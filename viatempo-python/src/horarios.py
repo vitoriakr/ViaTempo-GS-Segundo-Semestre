@@ -13,6 +13,16 @@ def minutos_para_texto(minutos):
     return f"{minutos // 60:02d}:{minutos % 60:02d}"
 
 
+def normalizar_horario(horario):
+    """Padroniza um horário no formato HH:MM."""
+    horario = horario.strip()
+
+    if not horario_valido(horario):
+        return None
+
+    hora, minuto = horario.split(":")
+    return f"{int(hora):02d}:{int(minuto):02d}"
+
 def horario_valido(texto):
     """Confere se o texto está no formato HH:MM e é um horário possível."""
     partes = texto.split(":")

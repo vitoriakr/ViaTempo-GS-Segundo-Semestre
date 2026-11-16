@@ -2,14 +2,22 @@
 from src.horarios import minutos_para_texto, texto_para_minutos
 from src.trajetos import estimar_trajeto, medias_por_horario
 
-JANELA_BUSCA = 240  # procura horários de saída até 4 horas antes do compromisso
+JANELA_BUSCA = 240        # procura horários de saída até 4 horas antes do compromisso
+TEMPO_BASE_PADRAO = 30    # usado quando o destino não está cadastrado em locais.json
+LIMITE_TAXA_VERMELHO = 25  # min de trajeto a mais por hora de atraso na saída
+LIMITE_TAXA_AMARELO = 10
 
 
 def buscar_local(locais, nome):
     for local in locais:
-        if local["nome"].lower() == nome.lower():
+        if local["nome"].strip().casefold() == nome.strip().casefold():
             return local
     return None
+
+
+def valor_ou_padrao(valor, padrao):
+    """Usa o valor do compromisso se ele existir. Atenção: 0 é um valor válido!"""
+    return padrao if valor is None else valor
 
 
 def calcular_saida(inicio, margem, medias, tempo_base, atraso_extra=0):
@@ -33,9 +41,9 @@ def nivel_urgencia(medias, saida, tempo_base):
     agora = estimar_trajeto(medias, saida, tempo_base)
     daqui_5_min = estimar_trajeto(medias, saida + 5, tempo_base)
     taxa = (daqui_5_min - agora) / (5 / 60)
-    if taxa >= 25:
+    if taxa >= LIMITE_TAXA_VERMELHO:
         return "vermelho", "Saia no horário! Cada minuto de atraso aumenta bastante o trajeto."
-    if taxa >= 10:
+    if taxa >= LIMITE_TAXA_AMARELO:
         return "amarelo", "Atenção: o trânsito está começando a piorar."
     if agora >= 1.5 * tempo_base:
         return "amarelo", "Você vai sair no horário de pico. Sair mais cedo encurta o trajeto."
@@ -46,8 +54,8 @@ def calcular_plano(compromisso, usuario, locais, historico):
     """Monta o plano de um compromisso usando os dados do usuário e do histórico."""
     inicio = texto_para_minutos(compromisso["horario"])
     # RF04/RF05: valor do compromisso se existir, senão o padrão do usuário
-    preparacao = compromisso.get("preparacao") or usuario["preparacao_padrao"]
-    margem = compromisso.get("margem") or usuario["margem_padrao"]
+    preparacao = valor_ou_padrao(compromisso.get("preparacao"), usuario["preparacao_padrao"])
+    margem = valor_ou_padrao(compromisso.get("margem"), usuario["margem_padrao"])
 
     plano = {"id": compromisso["id"], "titulo": compromisso["titulo"],
              "compromisso": compromisso["horario"], "destino": compromisso.get("destino"),
@@ -61,8 +69,10 @@ def calcular_plano(compromisso, usuario, locais, historico):
         return plano
 
     local = buscar_local(locais, compromisso["destino"])
-    tempo_base = local["tempo_base"] if local else 30
-    medias = medias_por_horario(historico, compromisso["destino"])
+    # usa o nome cadastrado ("FIAP") mesmo que o compromisso tenha sido digitado como "fiap"
+    nome_destino = local["nome"] if local else compromisso["destino"]
+    tempo_base = local["tempo_base"] if local else TEMPO_BASE_PADRAO
+    medias = medias_por_horario(historico, nome_destino)
     saida, trajeto = calcular_saida(inicio, margem, medias, tempo_base)
 
     if saida is None:
