@@ -128,7 +128,7 @@ export default function App() {
       }
       return { ...event, id: makeId('event'), locationId };
     });
-    const next = { ...data, events: [...data.events, ...events], locations, preferences: { ...data.preferences, ...payload.preferences } };
+    const next = { ...data, usuario: payload.usuario || data.usuario || '', alerta: payload.alerta ?? data.alerta ?? null, events: [...data.events, ...events], locations, preferences: { ...data.preferences, ...payload.preferences } };
     try {
       await api.save(next);
       setData(next); setToast({ message: `${events.length} ${events.length === 1 ? 'compromisso importado' : 'compromissos importados'} com sucesso.`, type: 'success' });
@@ -157,12 +157,12 @@ export default function App() {
     <Sidebar active={view} onNavigate={(next) => { setView(next); setMenuOpen(false); }} open={menuOpen} onClose={() => setMenuOpen(false)} />
     <main className="main-area"><Topbar title={viewTitles[view]} date={formattedToday} onMenu={() => setMenuOpen(true)} onPreferences={() => setPreferencesOpen(true)} />
       <div className="page-body">
-        {view === 'home' && <Dashboard todayEvents={todayEvents} nextEvent={nextEvent} placeFull={placeFull} onNew={() => setEventModal({ mode: 'new' })} onEdit={setEventModal} onDelete={setPendingDelete} onFeedback={changeRecommendation} onEventFeedback={recordOutcome} onNavigate={setView} />}
+        {view === 'home' && <Dashboard todayEvents={todayEvents} nextEvent={nextEvent} date={formattedToday} placeFull={placeFull} onNew={() => setEventModal({ mode: 'new' })} onEdit={setEventModal} onDelete={setPendingDelete} onFeedback={changeRecommendation} onEventFeedback={recordOutcome} onNavigate={setView} />}
         {view === 'agenda' && <AgendaPage events={sortedEvents} placeFull={placeFull} filter={agendaDate} setFilter={setAgendaDate} onNew={() => setEventModal({ mode: 'new' })} onEdit={setEventModal} onDelete={setPendingDelete} onFeedback={changeRecommendation} onEventFeedback={recordOutcome} />}
         {view === 'places' && <LocationsPanel locations={data.locations} onSave={addPlace} onDelete={removePlace} />}
-        {view === 'data' && <><div className="page-intro"><div><span className="eyebrow">PORTABILIDADE E PRIVACIDADE</span><h2>Seus dados, do seu jeito.</h2><p>Importe sua agenda ou leve seus compromissos para onde precisar.</p></div><span className="intro-icon">⇅</span></div><ImportExportPanel data={data} onImport={importData} onDeleteData={deleteAllData} /></>}
+        {view === 'data' && <ImportExportPanel data={data} onImport={importData} onDeleteData={deleteAllData} />}
       </div>
-      <footer className="app-footer"><span>ViaTempo <span className="footer-separator">·</span> Seu caminho, no tempo certo.</span><span><span className="status-dot" /> {api.mode === 'local' ? 'Modo local' : 'API conectada'} <span className="footer-separator">·</span> Protótipo acadêmico com estimativas simuladas</span></footer>
+      <footer className="app-footer"><span>ViaTempo <span className="footer-separator">·</span> Planeje com calma.</span><span>{api.mode === 'local' ? 'Dados salvos neste navegador' : 'API conectada'}</span></footer>
     </main>
     <Toast message={toast?.message} type={toast?.type} onClose={() => setToast(null)} />
     {eventModal && <EventModal event={eventModal.mode === 'new' ? null : eventModal} initialDate={agendaDate || today} locations={data.locations} preferences={data.preferences} onClose={() => setEventModal(null)} onSave={saveEvent} />}
@@ -171,11 +171,11 @@ export default function App() {
   </div>;
 }
 
-function Dashboard({ todayEvents, nextEvent, placeFull, onNew, onEdit, onDelete, onFeedback, onEventFeedback, onNavigate }) {
+function Dashboard({ todayEvents, nextEvent, date, placeFull, onNew, onEdit, onDelete, onFeedback, onEventFeedback, onNavigate }) {
   const plan = nextEvent && buildRecommendation(nextEvent);
   return <>
-    <header className="page-intro"><div><span className="eyebrow">VIA TEMPO</span><h2>Hoje</h2></div><button className="btn btn-dark" onClick={onNew}>＋ Novo compromisso</button></header>
-    {nextEvent && <section className="next-plan"><div><span className="eyebrow">PRÓXIMO COMPROMISSO</span><h3>{nextEvent.title}</h3><p>{formatDate(nextEvent.date, { weekday: 'long', day: 'numeric', month: 'long' })} · {nextEvent.time}{placeFull(nextEvent.locationId) ? ` · ${placeFull(nextEvent.locationId)}` : ''}</p></div><div className="next-plan-times"><span>Preparar <strong>{formatTime(plan.recommendedPrepare)}</strong></span><span>Sair <strong>{formatTime(plan.recommendedDeparture)}</strong></span></div>{plan.change && !nextEvent.recommendationStatus && <div className="next-plan-alert"><span>A estimativa adiciona {plan.delay} min.</span><button className="btn btn-dark btn-sm" onClick={() => onFeedback(nextEvent, 'accepted')}>Aceitar sugestão</button><button className="btn btn-light btn-sm" onClick={() => onFeedback(nextEvent, 'rejected')}>Manter horário</button></div>}</section>}
+    <header className="page-intro"><div><span className="eyebrow">{date}</span><h2>Meu dia</h2></div><button className="btn btn-dark" onClick={onNew}>＋ Novo compromisso</button></header>
+    {nextEvent && <section className="next-plan"><div><span className="eyebrow">PRÓXIMO COMPROMISSO</span><h3>{nextEvent.title}</h3><p>{formatDate(nextEvent.date, { weekday: 'long', day: 'numeric', month: 'long' })} · {nextEvent.time}{placeFull(nextEvent.locationId) || nextEvent.importedLocation ? ` · ${placeFull(nextEvent.locationId) || nextEvent.importedLocation}` : ''}</p>{nextEvent.message && <p className="event-message">{nextEvent.message}</p>}</div><div className="next-plan-times"><span>Preparar <strong>{formatTime(plan.recommendedPrepare)}</strong></span><span>Sair <strong>{formatTime(plan.recommendedDeparture)}</strong></span></div>{plan.change && !nextEvent.recommendationStatus && <div className="next-plan-alert"><span>A estimativa adiciona {plan.delay} min.</span><button className="btn btn-dark btn-sm" onClick={() => onFeedback(nextEvent, 'accepted')}>Aceitar sugestão</button><button className="btn btn-light btn-sm" onClick={() => onFeedback(nextEvent, 'rejected')}>Manter horário</button></div>}</section>}
     <section className="today-section"><div className="section-heading"><h2>Compromissos de hoje <span>{todayEvents.length}</span></h2><button className="text-button" onClick={() => onNavigate('agenda')}>Ver agenda →</button></div>
       {todayEvents.length ? <div className="event-list">{todayEvents.map((event) => <EventCard key={event.id} event={event} location={placeFull(event.locationId)} onEdit={onEdit} onDelete={onDelete} onFeedback={onFeedback} onEventFeedback={onEventFeedback} />)}</div> : <EmptyState title="Nada planejado para hoje" text="Adicione um compromisso para criar seu primeiro plano." action={<button className="btn btn-outline-dark" onClick={onNew}>＋ Adicionar compromisso</button>} />}
     </section>

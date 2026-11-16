@@ -5,7 +5,7 @@ export function Icon({ children, className = '' }) {
 }
 
 export function Brand() {
-  return <div className="brand-lockup"><span className="brand-mark">↗</span><strong>ViaTempo</strong></div>;
+  return <div className="brand-lockup"><span className="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 4h12M6 20h12M7 5c0 3 5 4 5 7s-5 4-5 7m10-14c0 3-5 4-5 7s5 4 5 7" /></svg></span><strong>ViaTempo</strong></div>;
 }
 
 const links = [
@@ -21,7 +21,6 @@ export function Sidebar({ active, onNavigate, open, onClose }) {
     <aside className={`app-sidebar ${open ? 'is-open' : ''}`}>
       <div className="sidebar-head"><Brand /><button className="btn-close d-lg-none" aria-label="Fechar menu" onClick={onClose} /></div>
       <nav aria-label="Navegação principal">{links.map(({ id, label, icon }) => <button key={id} className={`side-link ${active === id ? 'active' : ''}`} aria-current={active === id ? 'page' : undefined} onClick={() => onNavigate(id)}><Icon>{icon}</Icon>{label}</button>)}</nav>
-      <div className="sidebar-note">Seus dados ficam neste navegador.</div>
     </aside>
   </>;
 }

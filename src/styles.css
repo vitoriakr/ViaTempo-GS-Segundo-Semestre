@@ -36,3 +36,31 @@ body{font-size:15px;line-height:1.55}
 .setup-card .form-control,.setup-card .input-group-text{font-size:13px}
 .event-details[open],.advanced-fields[open]{padding-bottom:4px}
 @media(max-width:600px){.page-intro h2{font-size:28px}.onboarding-copy h1{font-size:44px}.content-panel{padding:17px}}
+
+/* ViaTempo hourglass identity: warm sand accent, quiet surfaces, clear focus. */
+:root{--sand:#a85e26;--sand-soft:#fbf1e7;--sand-line:#e8c8a8}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline-color:var(--sand)!important}
+.brand-mark{border-color:var(--sand);background:var(--sand-soft);color:var(--sand)}
+.brand-mark svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.onboarding-nav .brand-mark{background:var(--sand-soft);color:var(--sand)}
+.onboarding-overline i,.onboarding-local i{background:var(--sand)}
+.btn-dark{background:var(--sand);border-color:var(--sand)}
+.btn-dark:hover,.btn-dark:focus{background:#894719;border-color:#894719}
+.btn-outline-dark:hover{background:var(--sand-soft);border-color:var(--sand);color:#704019}
+.side-link.active{position:relative;background:var(--sand-soft);color:#704019}
+.side-link.active:before{content:'';position:absolute;left:0;top:8px;bottom:8px;width:3px;border-radius:0 4px 4px 0;background:var(--sand)}
+.next-plan{border-top-color:var(--sand-line)}
+.next-plan .eyebrow,.event-time strong,.plan-facts strong{color:#79451f}
+.suggestion{background:var(--sand-soft)}
+.choice-card.primary-choice{border-color:var(--sand-line);background:linear-gradient(110deg,#fff 65%,var(--sand-soft))}
+.choice-icon{color:var(--sand);border-color:var(--sand-line);background:var(--sand-soft)}
+.setup-progress i{background:var(--sand)}
+.provider-tabs button.selected{border-color:var(--sand-line);background:#fffaf5;color:#704019}
+.json-drop:hover{border-color:var(--sand);background:#fffaf5}
+.json-drop-symbol,.preview-check{color:var(--sand)}
+.file-button:focus-within,.file-button:hover{border-color:var(--sand);background:#fffaf5}
+.toast-message.success>span{color:var(--sand)}
+.event-message{display:flex;align-items:flex-start;gap:8px;margin-top:10px!important;color:#704019!important;font-size:12px!important}
+.event-message:before{content:'';display:block;flex:0 0 8px;height:8px;margin-top:5px;border-radius:50%;background:var(--sand)}
+.app-footer{border-color:#eee5dc}
+@media(prefers-reduced-transparency:reduce){.app-sidebar,.topbar,.onboarding-local,.choice-card,.setup-card{background:#fff}}

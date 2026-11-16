@@ -65,34 +65,31 @@ O navegador envia e recebe JSON com `Content-Type: application/json`. A API deve
 
 ## Formato JSON para Python
 
-O arquivo exportado contém `schemaVersion`, `exportedAt`, `source`, `events`, `locations`, `preferences` e `feedback`. Datas usam `AAAA-MM-DD`, horários usam `HH:MM` local e durações são minutos.
+O importador e exportador aceitam o modelo usado pela análise Python: `usuario`, `data`, `compromissos` e `alerta`. O app também mantém a leitura dos formatos ViaTempo (`events`) e de lista de eventos legada.
 
 ```json
 {
-  "schemaVersion": "1.0.0",
-  "source": "viatempo-web",
-  "events": [
+  "usuario": "Marina",
+  "data": "2026-11-19",
+  "compromissos": [
     {
-      "id": "event-123",
-      "title": "Aula",
-      "date": "2026-11-17",
-      "time": "19:00",
-      "locationId": "place-123",
-      "travelMinutes": 28,
-      "prepMinutes": 35,
-      "bufferMinutes": 12,
-      "trafficDelay": 8,
-      "alertThreshold": 5,
-      "recommendationStatus": ""
+      "id": 1,
+      "titulo": "Aula na FIAP",
+      "horario": "08:00",
+      "destino": "FIAP",
+      "saida": "07:15",
+      "despertar": "06:30",
+      "trajeto_min": 35,
+      "fonte": "histórico",
+      "urgencia": "vermelho",
+      "mensagem": "Saia no horário!"
     }
   ],
-  "locations": [],
-  "preferences": {},
-  "feedback": []
+  "alerta": null
 }
 ```
 
-O importador também aceita uma lista de eventos como JSON legado. Para `.ics`, eventos de dia inteiro recebem 09:00 como horário inicial padrão. Eventos com destino importado sem correspondência são preservados como locais frequentes.
+`data` define o dia dos compromissos quando cada item não informa sua própria data. Na exportação, cada compromisso também inclui `data` para manter agendas com mais de um dia. `despertar` e `saida` são calculados a partir do horário, deslocamento, preparação e margem cadastrados.
 
 ## Estrutura
 

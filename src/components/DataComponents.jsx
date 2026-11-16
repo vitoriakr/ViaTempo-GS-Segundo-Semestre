@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { parseICS, normalizeImportedJSON, toICS } from '../utils/calendar';
+import { parseICS, normalizeImportedJSON, toICS, toPythonJSON } from '../utils/calendar';
 import { Modal } from './Primitives';
 
 function download(name, content, type) {
@@ -27,14 +27,13 @@ export function ImportExportPanel({ data, onImport, onDeleteData }) {
     finally { setBusy(false); }
   }
 
-  const json = () => download('viatempo-dados.json', JSON.stringify({ schemaVersion: '1.0.0', exportedAt: new Date().toISOString(), source: 'viatempo-web', ...data }, null, 2), 'application/json');
+  const json = () => download('viatempo-dados.json', JSON.stringify(toPythonJSON(data), null, 2), 'application/json');
   const ics = () => download('viatempo-agenda.ics', toICS(data.events, data.locations), 'text/calendar;charset=utf-8');
 
   return <div className="data-page">
     <header className="page-intro"><div><span className="eyebrow">PORTABILIDADE</span><h2>Seus dados</h2></div></header>
-    <section className="content-panel"><h3>Importar agenda</h3><p>Selecione um arquivo .ics ou JSON. Ele será lido neste dispositivo.</p><label className="file-button"><input type="file" accept=".ics,.json,text/calendar,application/json" onChange={(event) => { readFile(event.target.files?.[0]); event.target.value = ''; }} />{busy ? 'Lendo arquivo…' : 'Escolher arquivo'}</label>{error && <p className="form-alert" role="alert">{error}</p>}</section>
-    <section className="content-panel"><h3>Exportar</h3><p>JSON para análise em Python ou calendário .ics.</p><div className="data-actions"><button className="btn btn-dark" onClick={json}>Baixar JSON</button><button className="btn btn-outline-dark" onClick={ics}>Baixar .ics</button></div></section>
-    <p className="data-note">Os tempos de deslocamento são informados; o atraso é simulado. Não há consulta de trânsito em tempo real.</p>
+    <section className="content-panel"><h3>Importar agenda</h3><p>JSON ViaTempo, JSON de análise ou calendário .ics.</p><label className="file-button"><input type="file" accept=".ics,.json,text/calendar,application/json" onChange={(event) => { readFile(event.target.files?.[0]); event.target.value = ''; }} />{busy ? 'Lendo arquivo…' : 'Escolher arquivo'}</label>{error && <p className="form-alert" role="alert">{error}</p>}</section>
+    <section className="content-panel"><h3>Exportar</h3><div className="data-actions"><button className="btn btn-dark" onClick={json}>JSON para Python</button><button className="btn btn-outline-dark" onClick={ics}>Calendário .ics</button></div></section>
     <details className="delete-data"><summary>Apagar meus dados</summary><p>Remove compromissos e locais deste navegador.</p><button className="btn btn-outline-dark" onClick={onDeleteData}>Continuar para apagar</button></details>
   </div>;
 }

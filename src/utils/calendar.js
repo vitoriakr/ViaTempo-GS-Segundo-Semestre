@@ -46,13 +46,71 @@ export function toICS(events, locations = []) {
 }
 
 export function normalizeImportedJSON(value) {
+  const isPythonFormat = value && Array.isArray(value.compromissos);
   const payload = Array.isArray(value) ? { events: value } : value;
-  if (!payload || !Array.isArray(payload.events)) throw new Error('JSON inválido: era esperado um objeto com a lista "events".');
-  const events = payload.events.map((event, index) => {
+  const entries = isPythonFormat ? payload.compromissos : payload?.events;
+  if (!Array.isArray(entries)) throw new Error('JSON inválido: esperado "compromissos" ou "events" com uma lista de eventos.');
+  const events = entries.map((event, index) => {
+    if (isPythonFormat) {
+      const eventDate = event?.data || payload.data;
+      if (!event || typeof event !== 'object' || !event.titulo || !/^\d{2}:\d{2}$/.test(event.horario || '') || !/^\d{4}-\d{2}-\d{2}$/.test(eventDate || '')) {
+        throw new Error(`Compromisso ${index + 1}: informe titulo, horario (HH:MM) e data (AAAA-MM-DD) no arquivo.`);
+      }
+      const timeMinutes = toMinutes(event.horario);
+      const departureMinutes = event.saida ? toMinutes(event.saida) : null;
+      const wakeMinutes = event.despertar ? toMinutes(event.despertar) : null;
+      const travelMinutes = Math.max(0, Number(event.trajeto_min) || 0);
+      const bufferMinutes = departureMinutes == null
+        ? (wakeMinutes == null ? 0 : Math.max(0, timeMinutes - wakeMinutes))
+        : Math.max(0, timeMinutes - departureMinutes - travelMinutes);
+      const prepMinutes = departureMinutes == null ? 0 : (wakeMinutes == null ? 30 : Math.max(0, departureMinutes - wakeMinutes));
+      return {
+        id: `json-${Date.now()}-${index}`, externalId: event.id, title: String(event.titulo).slice(0, 120), date: eventDate,
+        time: event.horario, locationId: '', importedLocation: event.destino || '', travelMinutes, prepMinutes, bufferMinutes,
+        trafficDelay: 0, alertThreshold: 5, status: 'pending', source: 'json', sourceLabel: event.fonte || '', urgency: event.urgencia || '', message: event.mensagem || '',
+      };
+    }
     if (!event || typeof event !== 'object' || !event.title || !/^\d{4}-\d{2}-\d{2}$/.test(event.date) || !/^\d{2}:\d{2}$/.test(event.time)) {
       throw new Error(`Compromisso ${index + 1}: informe title, date (AAAA-MM-DD) e time (HH:MM).`);
     }
     return { id: event.id || `json-${Date.now()}-${index}`, title: String(event.title).slice(0, 120), date: event.date, time: event.time, locationId: event.locationId || '', importedLocation: event.location || event.importedLocation || '', travelMinutes: Number(event.travelMinutes ?? event.travelTime ?? 30), prepMinutes: Number(event.prepMinutes ?? 30), bufferMinutes: Number(event.bufferMinutes ?? 15), trafficDelay: Number(event.trafficDelay ?? 0), alertThreshold: Number(event.alertThreshold ?? 5), status: 'pending', source: 'json' };
   });
-  return { events, locations: Array.isArray(payload.locations) ? payload.locations : [], preferences: payload.preferences || {}, feedback: Array.isArray(payload.feedback) ? payload.feedback : [] };
+  return { events, locations: Array.isArray(payload.locations) ? payload.locations : [], preferences: payload.preferences || {}, feedback: Array.isArray(payload.feedback) ? payload.feedback : [], usuario: payload.usuario || '', alerta: payload.alerta ?? null };
+}
+
+const toMinutes = (time) => {
+  const [hours, minutes] = time.split(':').map(Number);
+  return hours * 60 + minutes;
+};
+
+const fromMinutes = (value) => {
+  const normalized = ((value % 1440) + 1440) % 1440;
+  return `${String(Math.floor(normalized / 60)).padStart(2, '0')}:${String(normalized % 60).padStart(2, '0')}`;
+};
+
+export function toPythonJSON(data) {
+  const events = [...(data.events || [])].sort((a, b) => `${a.date}T${a.time}`.localeCompare(`${b.date}T${b.time}`));
+  return {
+    usuario: data.usuario || '',
+    data: events[0]?.date || new Date().toISOString().slice(0, 10),
+    compromissos: events.map((event, index) => {
+      const time = toMinutes(event.time || '09:00');
+      const departure = time - (Number(event.travelMinutes) || 0) - (Number(event.bufferMinutes) || 0);
+      const wake = departure - (Number(event.prepMinutes) || 0);
+      return {
+        id: event.externalId ?? index + 1,
+        data: event.date,
+        titulo: event.title,
+        horario: event.time || '09:00',
+        destino: event.importedLocation || data.locations?.find((place) => place.id === event.locationId)?.address || null,
+        saida: event.importedLocation || event.locationId || Number(event.travelMinutes) > 0 ? fromMinutes(departure) : null,
+        despertar: fromMinutes(wake),
+        trajeto_min: Number(event.travelMinutes) || 0,
+        fonte: event.sourceLabel || event.source || null,
+        urgencia: event.urgency || 'verde',
+        mensagem: event.message || (Number(event.travelMinutes) ? 'Horário calculado com base nos tempos informados.' : 'Compromisso sem deslocamento.'),
+      };
+    }),
+    alerta: data.alerta ?? null,
+  };
 }
