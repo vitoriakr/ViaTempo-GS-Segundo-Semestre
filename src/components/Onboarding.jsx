@@ -1,0 +1,119 @@
+import React, { useState } from 'react';
+import { Brand } from './Primitives';
+import { makeId } from '../services/api';
+import { parseICS, normalizeImportedJSON } from '../utils/calendar';
+
+const emptyPreferences = { alertThreshold: 5, defaultPrepMinutes: 30, defaultBufferMinutes: 15, notifications: true };
+
+export default function Onboarding({ onComplete }) {
+  const [step, setStep] = useState('choose');
+  const [provider, setProvider] = useState('google');
+  const [fileError, setFileError] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [manual, setManual] = useState({ title: '', date: '', time: '', destination: '', travelMinutes: '', prepMinutes: '', bufferMinutes: '' });
+  const [staged, setStaged] = useState([]);
+  const [manualError, setManualError] = useState('');
+  const [preview, setPreview] = useState(null);
+
+  async function readCalendarFile(file, format) {
+    if (!file) return;
+    setBusy(true); setFileError('');
+    try {
+      const text = await file.text();
+      const payload = format === 'ics' ? { events: parseICS(text), locations: [], preferences: {} } : normalizeImportedJSON(JSON.parse(text));
+      setPreview({ ...payload, fileName: file.name });
+    } catch (error) { setFileError(error.message || 'Não consegui ler esse arquivo.'); }
+    finally { setBusy(false); }
+  }
+
+  function addManualEvent(event) {
+    event.preventDefault();
+    if (!manual.title.trim() || !manual.date || !manual.time) return setManualError('Preencha o nome, a data e o horário.');
+    if ([manual.travelMinutes, manual.prepMinutes, manual.bufferMinutes].some((time) => time === '' || !Number.isFinite(Number(time)) || Number(time) < 0)) return setManualError('Informe os tempos de deslocamento, preparação e margem. Use 0 quando não se aplicar.');
+    const placeId = manual.destination.trim() ? makeId('place') : '';
+    const eventItem = {
+      id: makeId('event'), title: manual.title.trim(), date: manual.date, time: manual.time,
+      locationId: placeId, travelMinutes: Number(manual.travelMinutes), prepMinutes: Number(manual.prepMinutes),
+      bufferMinutes: Number(manual.bufferMinutes), trafficDelay: 0, alertThreshold: 5,
+      recommendationStatus: '', source: 'manual',
+      ...(placeId ? { _setupPlace: { id: placeId, name: manual.destination.trim().split(',')[0], address: manual.destination.trim() } } : {}),
+    };
+    setStaged((current) => [...current, eventItem]); setManualError('');
+    setManual((current) => ({ ...current, title: '', time: '09:00' }));
+  }
+
+  async function finishManual(event) {
+    event?.preventDefault();
+    let events = staged;
+    if (manual.title.trim()) {
+      if (!manual.date || !manual.time) return setManualError('Preencha a data e o horário do último compromisso.');
+      if ([manual.travelMinutes, manual.prepMinutes, manual.bufferMinutes].some((time) => time === '' || !Number.isFinite(Number(time)) || Number(time) < 0)) return setManualError('Informe os tempos de deslocamento, preparação e margem. Use 0 quando não se aplicar.');
+      const placeId = manual.destination.trim() ? makeId('place') : '';
+      events = [...events, { id: makeId('event'), title: manual.title.trim(), date: manual.date, time: manual.time, locationId: placeId, travelMinutes: Number(manual.travelMinutes), prepMinutes: Number(manual.prepMinutes), bufferMinutes: Number(manual.bufferMinutes), trafficDelay: 0, alertThreshold: 5, recommendationStatus: '', source: 'manual', ...(placeId ? { _setupPlace: { id: placeId, name: manual.destination.trim().split(',')[0], address: manual.destination.trim() } } : {}) }];
+    }
+    if (!events.length) return setManualError('Adicione pelo menos um compromisso ou escolha “Planejar depois”.');
+    const places = new Map();
+    events = events.map(({ _setupPlace, ...item }) => {
+      if (!_setupPlace) return item;
+      const key = _setupPlace.address.trim().toLocaleLowerCase('pt-BR');
+      let place = places.get(key);
+      if (!place) { place = _setupPlace; places.set(key, place); }
+      return { ...item, locationId: place.id };
+    });
+    await onComplete({ events, locations: [...places.values()], preferences: { ...emptyPreferences, defaultPrepMinutes: Number(manual.prepMinutes), defaultBufferMinutes: Number(manual.bufferMinutes) }, feedback: [] });
+  }
+
+  async function finishImport() {
+    if (!preview) return;
+    const importedLocations = preview.locations || [];
+    const locations = importedLocations.map((location) => ({ ...location, id: location.id || makeId('place') }));
+    const ids = new Map(importedLocations.map((item, index) => [item.id, locations[index]?.id]));
+    const events = preview.events.map((event) => ({ ...event, id: makeId('event'), locationId: ids.get(event.locationId) || event.locationId || '', source: event.source || (provider === 'json' ? 'json' : 'ics') }));
+    await onComplete({ events, locations, preferences: { ...emptyPreferences, ...(preview.preferences || {}) }, feedback: preview.feedback || [] });
+  }
+
+  const back = () => { setStep('choose'); setPreview(null); setFileError(''); setManualError(''); };
+
+  return <main className="onboarding-shell">
+    <div className="onboarding-glow glow-one" /><div className="onboarding-glow glow-two" />
+    <header className="onboarding-nav"><Brand /><span className="onboarding-local"><i /> Configuração privada neste dispositivo</span></header>
+    <section className="onboarding-main" aria-live="polite">
+      {step === 'choose' && <div className="onboarding-choose">
+        <div className="onboarding-copy"><span className="onboarding-overline"><i /> PLANEJAMENTO QUE ACOMPANHA VOCÊ</span><h1>Seu tempo,<br /><em>do seu jeito.</em></h1><p>Comece trazendo sua rotina. Você escolhe como: aos poucos, de um calendário ou de um arquivo.</p><div className="onboarding-assurance"><span>◈</span><span>Seus dados ficam neste navegador. Você pode exportá-los ou apagá-los quando quiser.</span></div></div>
+        <div className="choice-stack" aria-label="Escolha como começar">
+          <button className="choice-card primary-choice" onClick={() => setStep('manual')}><span className="choice-icon manual-icon">＋</span><span className="choice-copy"><strong>Preencher manualmente</strong><small>Adicione seus compromissos e tempos de rotina.</small></span><span className="choice-arrow">↗</span></button>
+          <button className="choice-card" onClick={() => { setStep('calendar'); setProvider('google'); }}><span className="choice-icon calendar-icon">▦</span><span className="choice-copy"><strong>Importar de um calendário</strong><small>Google Calendar ou Apple Calendar via arquivo .ics.</small></span><span className="choice-arrow">↗</span></button>
+          <button className="choice-card" onClick={() => { setStep('json'); setProvider('json'); }}><span className="choice-icon json-icon">{'{ }'}</span><span className="choice-copy"><strong>Importar arquivo JSON</strong><small>Use seus dados do ViaTempo ou outro JSON compatível.</small></span><span className="choice-arrow">↗</span></button>
+          <button className="quiet-link" onClick={() => onComplete({ events: [], locations: [], preferences: emptyPreferences, feedback: [] })}>Quero explorar primeiro <span>→</span></button>
+        </div>
+      </div>}
+
+      {step === 'manual' && <div className="setup-card"><button className="back-link" onClick={back}>← <span>Voltar às opções</span></button><div className="setup-progress"><span>1 de 1 · PRIMEIROS COMPROMISSOS</span><div><i /></div></div><h1>O que faz parte<br />do seu dia?</h1><p className="setup-description">Informe um compromisso e quanto tempo sua rotina costuma precisar. Você pode adicionar outros agora ou depois.</p>
+        {staged.length > 0 && <div className="staged-list"><span className="field-caption">ADICIONADOS ({staged.length})</span>{staged.map((item) => <div className="staged-row" key={item.id}><span className="staged-time">{item.time}</span><strong>{item.title}</strong><span>{item.date}</span><button type="button" aria-label={`Remover ${item.title}`} onClick={() => setStaged((current) => current.filter((row) => row.id !== item.id))}>×</button></div>)}</div>}
+        <form onSubmit={addManualEvent} className="manual-form">
+          {manualError && <div role="alert" className="form-alert">{manualError}</div>}
+          <div><label className="form-label" htmlFor="setup-title">Compromisso</label><input id="setup-title" className="form-control" maxLength="120" placeholder="Ex.: Aula, trabalho, consulta" value={manual.title} onChange={(e) => setManual({ ...manual, title: e.target.value })} /></div>
+          <div className="row g-3"><div className="col-6"><label className="form-label" htmlFor="setup-date">Data</label><input id="setup-date" type="date" className="form-control" value={manual.date} onChange={(e) => setManual({ ...manual, date: e.target.value })} /></div><div className="col-6"><label className="form-label" htmlFor="setup-time">Horário</label><input id="setup-time" type="time" className="form-control" value={manual.time} onChange={(e) => setManual({ ...manual, time: e.target.value })} /></div></div>
+          <div><label className="form-label" htmlFor="setup-destination">Destino <span className="optional">opcional</span></label><input id="setup-destination" className="form-control" placeholder="Local ou endereço" value={manual.destination} onChange={(e) => setManual({ ...manual, destination: e.target.value })} /></div>
+          <div className="row g-3"><div className="col-4"><label className="form-label" htmlFor="setup-travel">Deslocamento</label><div className="input-group"><input id="setup-travel" type="number" min="0" placeholder="0" className="form-control" value={manual.travelMinutes} onChange={(e) => setManual({ ...manual, travelMinutes: e.target.value })} /><span className="input-group-text">min</span></div></div><div className="col-4"><label className="form-label" htmlFor="setup-prep">Preparação</label><div className="input-group"><input id="setup-prep" type="number" min="0" placeholder="0" className="form-control" value={manual.prepMinutes} onChange={(e) => setManual({ ...manual, prepMinutes: e.target.value })} /><span className="input-group-text">min</span></div></div><div className="col-4"><label className="form-label" htmlFor="setup-buffer">Margem</label><div className="input-group"><input id="setup-buffer" type="number" min="0" placeholder="0" className="form-control" value={manual.bufferMinutes} onChange={(e) => setManual({ ...manual, bufferMinutes: e.target.value })} /><span className="input-group-text">min</span></div></div></div>
+          <div className="manual-actions"><button className="btn btn-quiet" type="submit">＋ Adicionar mais um</button><button className="btn btn-dark" type="button" onClick={finishManual}>{staged.length ? 'Salvar e entrar' : 'Adicionar e entrar'} <span>↗</span></button></div>
+        </form><button className="skip-setup" onClick={() => onComplete({ events: [], locations: [], preferences: emptyPreferences, feedback: [] })}>Planejar depois</button>
+      </div>}
+
+      {step === 'calendar' && <div className="setup-card calendar-setup"><button className="back-link" onClick={back}>← <span>Voltar às opções</span></button><div className="setup-progress"><span>IMPORTAR CALENDÁRIO</span><div><i /></div></div><h1>Traga sua agenda<br />com você.</h1><p className="setup-description">Escolha de onde vem seu calendário. Exporte um arquivo .ics do serviço e importe com segurança, sem compartilhar sua senha.</p>
+        {!preview ? <><div className="provider-tabs" role="tablist" aria-label="Serviço de calendário"><button className={provider === 'google' ? 'selected' : ''} role="tab" aria-selected={provider === 'google'} onClick={() => setProvider('google')}><span className="provider-logo google-logo">G</span>Google Calendar</button><button className={provider === 'apple' ? 'selected' : ''} role="tab" aria-selected={provider === 'apple'} onClick={() => setProvider('apple')}><span className="provider-logo apple-logo">●</span>Apple Calendar</button></div><div className="provider-instructions"><span className="provider-step">{provider === 'google' ? 'GOOGLE CALENDAR' : 'APPLE CALENDAR'}</span>{provider === 'google' ? <ol><li>Abra o Google Calendar e entre em <strong>Configurações → Importar e exportar</strong>.</li><li>Exporte sua agenda e escolha o arquivo <strong>.ics</strong> descompactado.</li></ol> : <ol><li>No app Calendário do Mac, escolha <strong>Arquivo → Exportar → Exportar</strong>.</li><li>Selecione o arquivo exportado e confirme a importação.</li></ol>}<label className="calendar-upload"><input type="file" accept=".ics,text/calendar" onChange={(e) => { readCalendarFile(e.target.files?.[0], 'ics'); e.target.value = ''; }} /><span>{busy ? 'Lendo agenda…' : 'Escolher arquivo .ics'} <b>↗</b></span><small>Arquivo lido neste dispositivo; conexão direta via API pode ser ativada com credenciais do serviço.</small></label></div></> : <ImportPreview preview={preview} onCancel={() => setPreview(null)} onConfirm={finishImport} />}
+        {fileError && <p className="form-alert" role="alert">{fileError}</p>}<button className="skip-setup" onClick={() => onComplete({ events: [], locations: [], preferences: emptyPreferences, feedback: [] })}>Não tenho um arquivo agora · planejar depois</button>
+      </div>}
+
+      {step === 'json' && <div className="setup-card json-setup"><button className="back-link" onClick={back}>← <span>Voltar às opções</span></button><div className="setup-progress"><span>IMPORTAR DADOS</span><div><i /></div></div><h1>Continue de onde<br />você parou.</h1><p className="setup-description">Selecione um JSON exportado pelo ViaTempo. Vamos conferir os dados antes de adicionar à sua rotina.</p>
+        {!preview ? <label className="json-drop"><input type="file" accept=".json,application/json" onChange={(e) => { readCalendarFile(e.target.files?.[0], 'json'); e.target.value = ''; }} /><span className="json-drop-symbol">{'{ }'}</span><strong>{busy ? 'Lendo arquivo…' : 'Selecionar arquivo JSON'}</strong><small>JSON do ViaTempo · compatível com a análise em Python</small></label> : <ImportPreview preview={preview} onCancel={() => setPreview(null)} onConfirm={finishImport} />}
+        {fileError && <p className="form-alert" role="alert">{fileError}</p>}<button className="skip-setup" onClick={() => onComplete({ events: [], locations: [], preferences: emptyPreferences, feedback: [] })}>Começar sem importar</button>
+      </div>}
+    </section>
+    <footer className="onboarding-footer"><span>ViaTempo · Seu caminho, no tempo certo.</span><span>Seus dados continuam sob seu controle.</span></footer>
+  </main>;
+}
+
+function ImportPreview({ preview, onCancel, onConfirm }) {
+  return <div className="import-preview"><div className="preview-check">✓</div><div><strong>Arquivo pronto para importar</strong><small>{preview.fileName}</small></div><div className="preview-counts"><span><b>{preview.events.length}</b> compromissos</span><span><b>{(preview.locations || []).length}</b> locais</span></div><div className="preview-actions"><button className="btn btn-outline-dark" onClick={onCancel}>Escolher outro</button><button className="btn btn-dark" onClick={onConfirm}>Importar e entrar <span>↗</span></button></div></div>;
+}
