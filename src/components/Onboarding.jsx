@@ -75,16 +75,21 @@ export default function Onboarding({ onComplete }) {
   const back = () => { setStep('choose'); setPreview(null); setFileError(''); setManualError(''); };
 
   return <main className="onboarding-shell">
-    <div className="onboarding-glow glow-one" /><div className="onboarding-glow glow-two" />
-    <header className="onboarding-nav"><Brand /></header>
+    <header className={`onboarding-nav ${step === 'choose' ? 'centered' : ''}`}><Brand />{step === 'choose' && <span>Rotina inteligente</span>}</header>
     <section className="onboarding-main" aria-live="polite">
       {step === 'choose' && <div className="onboarding-choose">
-        <div className="onboarding-copy"><span className="onboarding-overline"><i /> ORGANIZE SEU TEMPO</span><h1>Seu dia,<br /><em>no seu ritmo.</em></h1><p>Adicione ou importe seus compromissos.</p></div>
-        <div className="choice-stack" aria-label="Escolha como começar">
-          <button className="choice-card primary-choice" onClick={() => setStep('manual')}><span className="choice-icon manual-icon">＋</span><span className="choice-copy"><strong>Preencher manualmente</strong></span><span className="choice-arrow">↗</span></button>
-          <button className="choice-card" onClick={() => setStep('import')}><span className="choice-icon calendar-icon">↥</span><span className="choice-copy"><strong>Importar arquivo</strong><small>.ics ou JSON, de calendário ou Python.</small></span><span className="choice-arrow">↗</span></button>
-          <button className="quiet-link" onClick={() => onComplete({ events: [], locations: [], preferences: emptyPreferences, feedback: [] })}>Quero explorar primeiro <span>→</span></button>
-        </div>
+        <div className="onboarding-board"><div className="onboarding-options" aria-label="Escolha como começar">
+          <button className="entry-option" onClick={() => setStep('manual')}>
+            <span className="entry-illustration" aria-hidden="true"><svg viewBox="0 0 144 112"><rect x="23" y="20" width="82" height="72" rx="13" /><path d="M23 41h82M43 13v15M85 13v15M43 55h14M71 55h14M43 70h14" /><circle cx="103" cy="78" r="25" /><path d="M103 64v15l10 6" /></svg></span>
+            <span className="entry-title">Preencher rotina</span><span className="entry-description">Adicione compromissos, horários e destinos.</span>
+            <span className="entry-action">Começar manualmente <span aria-hidden="true">→</span></span>
+          </button>
+          <button className="entry-option" onClick={() => setStep('import')}>
+            <span className="entry-illustration" aria-hidden="true"><svg viewBox="0 0 144 112"><path d="M39 16h47l21 21v61H39a10 10 0 0 1-10-10V26a10 10 0 0 1 10-10Z" /><path d="M86 16v22h21M51 57h43M51 70h24" /><path d="M90 79v23m-11-11 11 11 11-11" /></svg></span>
+            <span className="entry-title">Importar rotina</span><span className="entry-description">Selecione um arquivo ICS ou JSON.</span>
+            <span className="entry-action">Escolher arquivo <span aria-hidden="true">→</span></span>
+          </button>
+        </div><button className="quiet-link" onClick={() => onComplete({ events: [], locations: [], preferences: emptyPreferences, feedback: [] })}>Explorar primeiro <span aria-hidden="true">→</span></button></div>
       </div>}
 
       {step === 'manual' && <div className="setup-card"><button className="back-link" onClick={back}>← <span>Voltar</span></button><div className="setup-progress"><span>COMPROMISSO</span><div><i /></div></div><h1>O que faz parte<br />do seu dia?</h1><p className="setup-description">Inclua o compromisso e os tempos da sua rotina.</p>
@@ -104,7 +109,6 @@ export default function Onboarding({ onComplete }) {
         {fileError && <p className="form-alert" role="alert">{fileError}</p>}<button className="skip-setup" onClick={() => onComplete({ events: [], locations: [], preferences: emptyPreferences, feedback: [] })}>Planejar depois</button>
       </div>}
     </section>
-    <footer className="onboarding-footer"><span>ViaTempo</span></footer>
   </main>;
 }
 
