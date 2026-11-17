@@ -7,7 +7,7 @@ import { ImportExportPanel, LocationsPanel, AccountModal } from './DataComponent
 import Onboarding from './Onboarding';
 import AssistantWidget from './Assistant';
 
-const viewTitles = { home: 'Meu dia', agenda: 'Minha agenda', places: 'Meus locais', data: 'Seus dados' };
+const viewTitles = { home: 'Meu dia', agenda: 'Minha agenda', journey: 'Jornada', places: 'Meus locais', data: 'Seus dados' };
 
 export default function App() {
   const [data, setData] = useState({ events: [], locations: [], preferences: {}, feedback: [] });
@@ -169,6 +169,7 @@ export default function App() {
     <main className="main-area"><Topbar title={viewTitles[view]} date={formattedToday} onMenu={() => setMenuOpen(true)} onAccount={() => setAccountOpen(true)} showHome={view !== 'home'} onHome={() => setView('home')} />
       <div className="page-body">
         {view === 'home' && <Dashboard todayEvents={todayEvents} nextEvent={nextEvent} recommendations={recommendations} conflicts={eventConflicts} today={today} placeFull={placeFull} onNew={() => setEventModal({ mode: 'new' })} onEdit={setEventModal} onDelete={setPendingDelete} onFeedback={changeRecommendation} onEventFeedback={recordOutcome} onNavigate={setView} />}
+        {view === 'journey' && <JourneyPage events={todayEvents} conflicts={eventConflicts} placeFull={placeFull} onNew={() => setEventModal({ mode: 'new' })} onEdit={setEventModal} onFeedback={recordOutcome} />}
         {view === 'agenda' && <AgendaPage events={sortedEvents} conflicts={eventConflicts} placeFull={placeFull} filter={agendaDate} setFilter={setAgendaDate} onNew={() => setEventModal({ mode: 'new' })} onEdit={setEventModal} onDelete={setPendingDelete} onFeedback={changeRecommendation} onEventFeedback={recordOutcome} />}
         {view === 'places' && <LocationsPanel locations={data.locations} onSave={addPlace} onDelete={removePlace} />}
         {view === 'data' && <ImportExportPanel data={data} onImport={importData} onDeleteData={deleteAllData} onNavigate={setView} />}
@@ -194,6 +195,21 @@ function Dashboard({ todayEvents, nextEvent, recommendations, conflicts, today, 
       {todayEvents.length ? <div className="event-list">{todayEvents.map((event) => <EventCard key={event.id} event={event} location={placeFull(event.locationId)} conflicts={conflicts.get(event.id)} onEdit={onEdit} onDelete={onDelete} onFeedback={onFeedback} onEventFeedback={onEventFeedback} />)}</div> : <EmptyState title="Nada planejado para hoje" text="Adicione um compromisso para criar seu primeiro plano." action={<button className="btn btn-outline-dark" onClick={onNew}>＋ Adicionar compromisso</button>} />}
     </section>
   </>;
+}
+
+function JourneyPage({ events, conflicts, placeFull, onNew, onEdit, onFeedback }) {
+  const now = new Date();
+  const past = events.filter((event) => new Date(`${event.date}T${event.time}`) < now);
+  const recorded = past.filter((event) => event.userFeedback);
+  const xp = recorded.reduce((sum, event) => sum + (event.userFeedback === 'on-time' ? 30 : 10), 0);
+  const level = Math.floor(xp / 100) + 1;
+  const next = events.find((event) => new Date(`${event.date}T${event.time}`) >= now);
+  return <div className="journey-page">
+    <header className="page-intro"><div><span className="eyebrow">SEU DIA EM MOVIMENTO</span><h2>Jornada de hoje</h2></div><button className="btn btn-dark" onClick={onNew}>＋ Nova missão</button></header>
+    <section className="journey-score"><div className="journey-level"><span className="journey-star">✦</span><div><span>NÍVEL {level}</span><strong>{xp} XP</strong></div></div><div className="journey-progress"><div><strong>{recorded.length} de {events.length}</strong><span>missões registradas</span></div><div className="journey-progress-track"><i style={{width:`${events.length ? Math.round(recorded.length/events.length*100) : 0}%`}} /></div><small>{100-(xp%100)} XP para o próximo nível</small></div><div className="journey-next"><span>PRÓXIMO PASSO</span><strong>{next ? `${next.time} · ${next.title}` : events.length ? 'Dia concluído!' : 'Sua jornada começa aqui'}</strong></div></section>
+    <div className="journey-heading"><h3>Trilha de compromissos</h3><span>{events.length} no roteiro</span></div>
+    {!events.length ? <div className="journey-empty"><span>✧</span><h3>Uma página em branco</h3><p>Adicione o primeiro compromisso e monte sua trilha de hoje.</p><button className="btn btn-dark" onClick={onNew}>Criar compromisso</button></div> : <div className="journey-track">{events.map((event,index)=>{const done=Boolean(event.userFeedback);const isPast=new Date(`${event.date}T${event.time}`)<now;const plan=buildRecommendation(event);return <article className={`journey-stop${done?' is-done':''}${!done&&isPast?' needs-checkin':''}`} key={event.id}><div className="journey-node"><span>{done?'✓':String(index+1).padStart(2,'0')}</span></div><div className="journey-card"><div className="journey-card-top"><time>{event.time}</time><span className="journey-status">{done?(event.userFeedback==='on-time'?'No horário · +30 XP':'Cheguei · +10 XP'):isPast?'Registrar chegada':next?.id===event.id?'Próxima parada':'A caminho'}</span></div><h4>{event.title}</h4><p>{placeFull(event.locationId)||event.importedLocation||'Sem destino'}{conflicts.get(event.id)?.length?` · Conflito com ${conflicts.get(event.id).join(', ')}`:''}</p>{!done&&!isPast&&<div className="journey-plan"><span>Preparar <strong>{formatTime(plan.recommendedPrepare)}</strong></span><span>Sair <strong>{formatTime(plan.recommendedDeparture)}</strong></span></div>}<div className="journey-actions"><button className="journey-edit" onClick={()=>onEdit(event)}>Editar</button>{isPast&&!done&&<><button className="btn btn-sm btn-dark" onClick={()=>onFeedback(event,'on-time')}>Cheguei no horário</button><button className="journey-late" onClick={()=>onFeedback(event,'late')}>Com atraso</button></>}</div></div></article>;})}</div>}
+  </div>;
 }
 
 function AgendaPage({ events, conflicts, placeFull, filter, setFilter, onNew, onEdit, onDelete, onFeedback, onEventFeedback }) {
