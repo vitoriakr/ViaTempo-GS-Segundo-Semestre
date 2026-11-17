@@ -5,6 +5,7 @@ const iconShapes = {
   calendar: <><rect x="3.5" y="5.5" width="17" height="16" rx="2.5" /><path d="M7.5 3.5v4M16.5 3.5v4M3.5 10h17" /><path d="M8 14h.01M12 14h.01M16 14h.01M8 17.5h.01M12 17.5h.01" /></>,
   places: <><path d="M19 10c0 5-7 11-7 11S5 15 5 10a7 7 0 1 1 14 0Z" /><circle cx="12" cy="10" r="2.2" /></>,
   files: <><path d="M9 3.5h5l4 4V15M14 3.5v4h4M9 3.5v17h9" /><path d="M3 10h5m-2-2 2 2-2 2M21 16h-5m2-2-2 2 2 2" /></>,
+  journey: <><path d="M4 19c3-8 6-11 9-7s4 6 7-7"/><circle cx="4" cy="19" r="2"/><path d="m17 5 3-1-1 3"/><circle cx="12.5" cy="12.5" r="1"/></>,
   menu: <><path d="M4 6h16M4 12h16M4 18h16" /></>,
 };
 
@@ -19,6 +20,7 @@ export function Brand() {
 const links = [
   { id: 'home', label: 'Meu dia', icon: 'home' },
   { id: 'agenda', label: 'Agenda', icon: 'calendar' },
+  { id: 'journey', label: 'Jornada', icon: 'journey' },
   { id: 'places', label: 'Locais', icon: 'places' },
   { id: 'data', label: 'Importar e exportar', icon: 'files' },
 ];
@@ -28,13 +30,13 @@ export function Sidebar({ active, onNavigate, open, onClose }) {
     {open && <button className="sidebar-scrim d-lg-none" aria-label="Fechar menu" onClick={onClose} />}
     <aside className={`app-sidebar ${open ? 'is-open' : ''}`}>
       <div className="sidebar-head"><Brand /><button className="btn-close d-lg-none" aria-label="Fechar menu" onClick={onClose} /></div>
-      <nav aria-label="Navegação principal">{links.map(({ id, label, icon }) => <button key={id} className={`side-link ${active === id ? 'active' : ''}`} aria-current={active === id ? 'page' : undefined} onClick={() => onNavigate(id)}><Icon name={icon} />{label}</button>)}</nav>
+      <nav aria-label="Navegação principal">{links.map(({ id, label, icon }) => <button key={id} className={`side-link ${active === id ? 'active' : ''}`} aria-label={label} title={label} aria-current={active === id ? 'page' : undefined} onClick={() => onNavigate(id)}><Icon name={icon} /><span className="side-label">{label}</span></button>)}</nav>
     </aside>
   </>;
 }
 
-export function Topbar({ title, date, onMenu, onPreferences }) {
-  return <header className="topbar"><button className="mobile-menu d-lg-none" onClick={onMenu} aria-label="Abrir menu"><Icon name="menu" /></button><div className="topbar-title"><span>{date}</span><h1>{title}</h1></div><button className="preferences-button" onClick={onPreferences}>Preferências</button></header>;
+export function Topbar({ title, date, onMenu, onAccount, onHome, showHome }) {
+  return <header className="topbar"><button className="mobile-menu d-lg-none" onClick={onMenu} aria-label="Abrir menu"><Icon name="menu" /></button>{showHome && <button className="topbar-home" onClick={onHome}><span aria-hidden="true">←</span> Início</button>}<div className="topbar-title"><span>{date}</span><h1>{title}</h1></div><button className="account-icon-button" onClick={onAccount} aria-label="Abrir conta" title="Conta"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c.7-3.3 3.2-5 7-5s6.3 1.7 7 5"/></svg></button></header>;
 }
 
 export function Toast({ message, type = 'success', onClose }) {

@@ -1,0 +1,31 @@
+{
+  "usuario": "Marina",
+  "data": "2026-11-20",
+  "compromissos": [
+    {
+      "id": 4,
+      "titulo": "Reunião de grupo",
+      "horario": "09:00",
+      "destino": "FIAP",
+      "saida": "07:52",
+      "despertar": "07:07",
+      "trajeto_min": 53,
+      "fonte": "histórico",
+      "urgencia": "amarelo",
+      "mensagem": "Atenção: o trânsito está começando a piorar."
+    },
+    {
+      "id": 5,
+      "titulo": "Chamada com o orientador",
+      "horario": "10:30",
+      "destino": null,
+      "saida": null,
+      "despertar": "10:25",
+      "trajeto_min": 0,
+      "fonte": null,
+      "urgencia": "verde",
+      "mensagem": "Compromisso sem deslocamento."
+    }
+  ],
+  "alerta": null
+}

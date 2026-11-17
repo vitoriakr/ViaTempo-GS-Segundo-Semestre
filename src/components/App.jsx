@@ -3,11 +3,11 @@ import { api, makeId } from '../services/api';
 import { todayISO, buildRecommendation, findScheduleConflicts, formatDate, formatTime } from '../utils/schedule';
 import { Sidebar, Topbar, Toast, Modal, Brand } from './Primitives';
 import { EmptyState, EventCard, EventModal, RecommendationMessage } from './EventComponents';
-import { ImportExportPanel, LocationsPanel, PreferencesModal } from './DataComponents';
+import { ImportExportPanel, LocationsPanel, AccountModal } from './DataComponents';
 import Onboarding from './Onboarding';
 import AssistantWidget from './Assistant';
 
-const viewTitles = { home: 'Meu dia', agenda: 'Minha agenda', places: 'Meus locais', data: 'Seus dados' };
+const viewTitles = { home: 'Meu dia', agenda: 'Minha agenda', journey: 'Jornada', places: 'Meus locais', data: 'Seus dados' };
 
 export default function App() {
   const [data, setData] = useState({ events: [], locations: [], preferences: {}, feedback: [] });
@@ -15,7 +15,7 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
   const [eventModal, setEventModal] = useState(null);
-  const [preferencesOpen, setPreferencesOpen] = useState(false);
+  const [accountOpen, setAccountOpen] = useState(false);
   const [agendaDate, setAgendaDate] = useState('');
   const [toast, setToast] = useState(null);
   const [pendingDelete, setPendingDelete] = useState(null);
@@ -146,9 +146,9 @@ export default function App() {
     } catch (error) { setToast({ message: `A importação não foi salva: ${error.message}`, type: 'error' }); }
   }
 
-  async function savePreferences(preferences) {
-    const next = { ...data, preferences };
-    try { await api.save(next); setData(next); setPreferencesOpen(false); setToast({ message: 'Preferências atualizadas.', type: 'success' }); }
+  async function saveAccount({ usuario, preferences }) {
+    const next = { ...data, usuario, preferences };
+    try { await api.save(next); setData(next); setAccountOpen(false); setToast({ message: 'Conta atualizada.', type: 'success' }); }
     catch (error) { setToast({ message: `Não foi possível salvar: ${error.message}`, type: 'error' }); }
   }
 
@@ -166,18 +166,19 @@ export default function App() {
 
   return <div className="app-frame">
     <Sidebar active={view} onNavigate={(next) => { setView(next); setMenuOpen(false); }} open={menuOpen} onClose={() => setMenuOpen(false)} />
-    <main className="main-area"><Topbar title={viewTitles[view]} date={formattedToday} onMenu={() => setMenuOpen(true)} onPreferences={() => setPreferencesOpen(true)} />
+    <main className="main-area"><Topbar title={viewTitles[view]} date={formattedToday} onMenu={() => setMenuOpen(true)} onAccount={() => setAccountOpen(true)} showHome={view !== 'home'} onHome={() => setView('home')} />
       <div className="page-body">
         {view === 'home' && <Dashboard todayEvents={todayEvents} nextEvent={nextEvent} recommendations={recommendations} conflicts={eventConflicts} today={today} placeFull={placeFull} onNew={() => setEventModal({ mode: 'new' })} onEdit={setEventModal} onDelete={setPendingDelete} onFeedback={changeRecommendation} onEventFeedback={recordOutcome} onNavigate={setView} />}
+        {view === 'journey' && <JourneyPage events={todayEvents} allEvents={sortedEvents} conflicts={eventConflicts} placeFull={placeFull} onNew={() => setEventModal({ mode: 'new' })} onEdit={setEventModal} onFeedback={recordOutcome} />}
         {view === 'agenda' && <AgendaPage events={sortedEvents} conflicts={eventConflicts} placeFull={placeFull} filter={agendaDate} setFilter={setAgendaDate} onNew={() => setEventModal({ mode: 'new' })} onEdit={setEventModal} onDelete={setPendingDelete} onFeedback={changeRecommendation} onEventFeedback={recordOutcome} />}
         {view === 'places' && <LocationsPanel locations={data.locations} onSave={addPlace} onDelete={removePlace} />}
-        {view === 'data' && <ImportExportPanel data={data} onImport={importData} onDeleteData={deleteAllData} />}
+        {view === 'data' && <ImportExportPanel data={data} onImport={importData} onDeleteData={deleteAllData} onNavigate={setView} />}
       </div>
     </main>
     <Toast message={toast?.message} type={toast?.type} onClose={() => setToast(null)} />
     {eventModal && <EventModal event={eventModal.mode === 'new' ? null : eventModal} initialDate={agendaDate || today} locations={data.locations} preferences={data.preferences} onClose={() => setEventModal(null)} onSave={saveEvent} />}
     <AssistantWidget todayEvents={todayEvents} events={sortedEvents} nextEvent={nextEvent} conflicts={eventConflicts} recommendations={recommendations} onFeedback={changeRecommendation} />
-    {preferencesOpen && <PreferencesModal preferences={data.preferences} onClose={() => setPreferencesOpen(false)} onSave={savePreferences} />}
+    {accountOpen && <AccountModal usuario={data.usuario} preferences={data.preferences} onClose={() => setAccountOpen(false)} onSave={saveAccount} onDeleteData={deleteAllData} eventCount={data.events.length} locationCount={data.locations.length} onExport={() => { const link = document.createElement('a'); link.href = URL.createObjectURL(new Blob([JSON.stringify({ ...data, exportedAt: new Date().toISOString(), format: 'viatempo-backup-v1' }, null, 2)], { type: 'application/json' })); link.download = 'viatempo-backup.json'; link.click(); URL.revokeObjectURL(link.href); }} />}
     {pendingDelete && <Modal title={pendingDelete.all ? 'Apagar seus dados?' : 'Excluir compromisso?'} eyebrow="CONFIRMAR AÇÃO" onClose={() => setPendingDelete(null)} footer={<><button className="btn btn-light" onClick={() => setPendingDelete(null)}>Cancelar</button><button className="btn btn-danger" onClick={pendingDelete.all ? confirmDeleteAll : deleteEvent}>{pendingDelete.all ? 'Apagar dados' : 'Excluir compromisso'}</button></>}><p>Confirme que deseja {pendingDelete.all ? pendingDelete.title : `remover “${pendingDelete.title}” da sua agenda`}. Essa ação não pode ser desfeita.</p></Modal>}
   </div>;
 }
@@ -194,6 +195,24 @@ function Dashboard({ todayEvents, nextEvent, recommendations, conflicts, today, 
       {todayEvents.length ? <div className="event-list">{todayEvents.map((event) => <EventCard key={event.id} event={event} location={placeFull(event.locationId)} conflicts={conflicts.get(event.id)} onEdit={onEdit} onDelete={onDelete} onFeedback={onFeedback} onEventFeedback={onEventFeedback} />)}</div> : <EmptyState title="Nada planejado para hoje" text="Adicione um compromisso para criar seu primeiro plano." action={<button className="btn btn-outline-dark" onClick={onNew}>＋ Adicionar compromisso</button>} />}
     </section>
   </>;
+}
+
+function JourneyPage({ events, allEvents, conflicts, placeFull, onNew, onEdit, onFeedback }) {
+  const now = new Date();
+  const past = events.filter((event) => new Date(`${event.date}T${event.time}`) < now);
+  const recorded = past.filter((event) => event.userFeedback);
+  const xp = allEvents.filter((event) => event.userFeedback).reduce((sum, event) => sum + (event.userFeedback === 'on-time' ? 30 : 10), 0);
+  const level = Math.floor(xp / 100) + 1;
+  const avatar = level >= 6 ? { emoji: '🧙', name: 'Mestre do Tempo', skin: 'master' } : level >= 4 ? { emoji: '🦊', name: 'Guardião da Trilha', skin: 'guardian' } : level >= 2 ? { emoji: '🧭', name: 'Navegador', skin: 'navigator' } : { emoji: '🐣', name: 'Explorador', skin: 'explorer' };
+  const islands = [{ xp: 0, name: 'Ilha do Começo', emoji: '🌱' }, { xp: 100, name: 'Ilha das Rotinas', emoji: '🌴' }, { xp: 300, name: 'Ilha da Pontualidade', emoji: '🏝️' }, { xp: 600, name: 'Arquipélago do Tempo', emoji: '🌋' }];
+  const next = events.find((event) => new Date(`${event.date}T${event.time}`) >= now);
+  return <div className="journey-page">
+    <header className="page-intro"><div><span className="eyebrow">SEU DIA EM MOVIMENTO</span><h2>Jornada de hoje</h2></div><button className="btn btn-dark" onClick={onNew}>＋ Nova missão</button></header>
+    <section className="journey-score"><div className="journey-level"><span className={`journey-avatar ${avatar.skin}`} aria-label={`Avatar: ${avatar.name}`}>{avatar.emoji}</span><div><span>NÍVEL {level} · {avatar.name}</span><strong>{xp} XP</strong></div></div><div className="journey-progress"><div><strong>{recorded.length} de {events.length}</strong><span>missões de hoje</span></div><div className="journey-progress-track"><i style={{width:`${events.length ? Math.round(recorded.length/events.length*100) : 0}%`}} /></div><small>{100-(xp%100)} XP para o próximo nível</small></div><div className="journey-next"><span>PRÓXIMO PASSO</span><strong>{next ? `${next.time} · ${next.title}` : events.length ? 'Dia concluído!' : 'Sua jornada começa aqui'}</strong></div></section>
+    <section className="island-map"><div className="island-map-title"><h3>Ilhas da jornada</h3><span>Desbloqueadas com XP</span></div><div className="island-chain">{islands.map((island,index)=>{const unlocked=xp>=island.xp;return <div className={`island-stop${unlocked?' unlocked':''}`} key={island.name}><span className="island-link" aria-hidden="true">{index>0?'······':''}</span><div className="island-art">{unlocked?island.emoji:'🔒'}</div><strong>{island.name}</strong><small>{island.xp===0?'Desbloqueada':unlocked?'Conquistada':`${island.xp} XP`}</small></div>;})}</div></section>
+    <div className="journey-heading"><h3>Trilha de compromissos</h3><span>{events.length} no roteiro</span></div>
+    {!events.length ? <div className="journey-empty"><span>✧</span><h3>Uma página em branco</h3><p>Adicione o primeiro compromisso e monte sua trilha de hoje.</p><button className="btn btn-dark" onClick={onNew}>Criar compromisso</button></div> : <div className="journey-track">{events.map((event,index)=>{const done=Boolean(event.userFeedback);const isPast=new Date(`${event.date}T${event.time}`)<now;const plan=buildRecommendation(event);const obstacle=conflicts.get(event.id)?.length?'Conflito de horários':event.trafficDelay>=(event.alertThreshold||5)&&event.trafficDelay>0?'Atraso no trajeto':'';return <article className={`journey-stop${done?' is-done':''}${!done&&isPast?' needs-checkin':''}`} key={event.id}><div className="journey-node"><span>{done?'✓':String(index+1).padStart(2,'0')}</span></div><div className="journey-card"><div className="journey-card-top"><time>{event.time}</time><span className="journey-status">{done?(event.userFeedback==='on-time'?'No horário · +30 XP':'Cheguei · +10 XP'):isPast?'Registrar chegada':next?.id===event.id?'Próxima parada':'A caminho'}</span></div><h4>{event.title}</h4><p>{placeFull(event.locationId)||event.importedLocation||'Sem destino'}</p>{obstacle&&<div className="journey-obstacle"><span aria-hidden="true">⚠</span><div><strong>Obstáculo na trilha</strong><small>{obstacle}{conflicts.get(event.id)?.length?` · ${conflicts.get(event.id).join(', ')}`:''}{event.trafficDelay>0?` · +${event.trafficDelay} min`:''}</small></div></div>}{!done&&!isPast&&<div className="journey-plan"><span>Preparar <strong>{formatTime(plan.recommendedPrepare)}</strong></span><span>Sair <strong>{formatTime(plan.recommendedDeparture)}</strong></span></div>}<div className="journey-actions"><button className="journey-edit" onClick={()=>onEdit(event)}>Editar</button>{isPast&&!done&&<><button className="btn btn-sm btn-dark" onClick={()=>onFeedback(event,'on-time')}>Cheguei no horário</button><button className="journey-late" onClick={()=>onFeedback(event,'late')}>Com atraso</button></>}</div></div></article>;})}</div>}
+  </div>;
 }
 
 function AgendaPage({ events, conflicts, placeFull, filter, setFilter, onNew, onEdit, onDelete, onFeedback, onEventFeedback }) {
@@ -216,7 +235,7 @@ function AgendaPage({ events, conflicts, placeFull, filter, setFilter, onNew, on
   function openEvent(event) { onEdit(event); }
   return <><header className="page-intro"><div><span className="eyebrow">SEUS COMPROMISSOS</span><h2>Agenda</h2></div><button className="btn btn-dark" onClick={() => onNew()}>＋ Novo compromisso</button></header>
     <section className="agenda-panel calendar-panel">
-      <div className="calendar-toolbar"><div className="calendar-navigation"><button className="calendar-arrow" aria-label="Período anterior" onClick={() => shiftPeriod(-1)}>‹</button><button className="calendar-arrow" aria-label="Próximo período" onClick={() => shiftPeriod(1)}>›</button><button className="btn btn-outline-dark calendar-today" onClick={() => { setAnchor(todayISO()); setFilter(''); }}>Hoje</button><h3>{periodTitle}</h3></div><div className="calendar-controls"><div className="calendar-modes" role="tablist" aria-label="Visualização da agenda">{[['day','Dia'],['week','Semana'],['month','Mês'],['list','Lista']].map(([value,label])=><button key={value} role="tab" aria-selected={mode===value} className={mode===value?'active':''} onClick={()=>setMode(value)}>{label}</button>)}</div><label className="visually-hidden" htmlFor="agenda-date">Ir para uma data</label><input id="agenda-date" type="date" className="form-control calendar-date-input" value={filter || anchor} onChange={(e)=>jumpToDate(e.target.value)} /></div></div>
+      <div className="calendar-toolbar"><div className="calendar-navigation"><button className="calendar-arrow" aria-label="Período anterior" onClick={() => shiftPeriod(-1)}>‹</button><button className="calendar-arrow" aria-label="Próximo período" onClick={() => shiftPeriod(1)}>›</button><button className="btn btn-outline-dark calendar-today" onClick={() => { setAnchor(todayISO()); setFilter(''); }}>Hoje</button><h3>{periodTitle}</h3></div><div className="calendar-controls"><div className="calendar-modes" role="tablist" aria-label="Visualização da agenda">{[['week','Semana'],['month','Mês'],['list','Lista']].map(([value,label])=><button key={value} role="tab" aria-selected={mode===value} className={mode===value?'active':''} onClick={()=>setMode(value)}>{label}</button>)}</div><label className="visually-hidden" htmlFor="agenda-date">Ir para uma data</label><input id="agenda-date" type="date" className="form-control calendar-date-input" value={filter || anchor} onChange={(e)=>jumpToDate(e.target.value)} /></div></div>
       {mode === 'week' && <WeekCalendar days={days} events={events} onEvent={openEvent} />}
       {mode === 'day' && <WeekCalendar days={days} events={events} onEvent={openEvent} single />}
       {mode === 'month' && <MonthCalendar date={selectedDate} events={events} onSelect={(day)=>{setAnchor(dateToISO(day));setFilter(dateToISO(day));setMode('day');}} onEvent={openEvent} />}

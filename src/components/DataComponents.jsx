@@ -10,7 +10,7 @@ function download(name, content, type) {
   URL.revokeObjectURL(link.href);
 }
 
-export function ImportExportPanel({ data, onImport, onDeleteData }) {
+export function ImportExportPanel({ data, onImport, onDeleteData, onNavigate }) {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
@@ -28,13 +28,13 @@ export function ImportExportPanel({ data, onImport, onDeleteData }) {
   }
 
   const json = () => download('viatempo-dados.json', JSON.stringify(toPythonJSON(data), null, 2), 'application/json');
+  const backup = () => download('viatempo-backup.json', JSON.stringify({ ...data, exportedAt: new Date().toISOString(), format: 'viatempo-backup-v1' }, null, 2), 'application/json');
   const ics = () => download('viatempo-agenda.ics', toICS(data.events, data.locations), 'text/calendar;charset=utf-8');
 
   return <div className="data-page">
-    <header className="page-intro"><div><span className="eyebrow">PORTABILIDADE</span><h2>Seus dados</h2></div></header>
-    <section className="content-panel"><h3>Importar agenda</h3><p>JSON ViaTempo, JSON de análise ou calendário .ics.</p><label className="file-button"><input type="file" accept=".ics,.json,text/calendar,application/json" onChange={(event) => { readFile(event.target.files?.[0]); event.target.value = ''; }} />{busy ? 'Lendo arquivo…' : 'Escolher arquivo'}</label>{error && <p className="form-alert" role="alert">{error}</p>}</section>
-    <section className="content-panel"><h3>Exportar</h3><div className="data-actions"><button className="btn btn-dark" onClick={json}>JSON para Python</button><button className="btn btn-outline-dark" onClick={ics}>Calendário .ics</button></div></section>
-    <details className="delete-data"><summary>Apagar meus dados</summary><p>Remove compromissos e locais deste navegador.</p><button className="btn btn-outline-dark" onClick={onDeleteData}>Continuar para apagar</button></details>
+    <header className="page-intro data-page-heading"><div><span className="eyebrow">PORTABILIDADE</span><h2>Importar e exportar</h2></div><button className="btn data-back-button" onClick={() => onNavigate('home')}><span aria-hidden="true">←</span> Início</button></header>
+    <div className="data-board"><section className="data-choice-card"><span className="data-choice-art" aria-hidden="true"><svg viewBox="0 0 120 100"><path d="M23 23h46l19 19v43H23z"/><path d="M69 23v20h19M37 57h36M37 68h24"/><path d="M91 48v34m-12-12 12 12 12-12"/></svg></span><span className="eyebrow">IMPORTAR</span><h3>Trazer arquivos</h3><label className="btn btn-dark data-file-choice"><input type="file" accept=".ics,.json,text/calendar,application/json" onChange={(event) => { readFile(event.target.files?.[0]); event.target.value = ''; }} />{busy ? 'Lendo arquivo…' : 'Selecionar arquivo'}</label>{error && <p className="form-alert" role="alert">{error}</p>}<small>.ics · JSON · calendário</small></section>
+      <section className="data-choice-card"><span className="data-choice-art" aria-hidden="true"><svg viewBox="0 0 120 100"><rect x="25" y="20" width="70" height="62" rx="12"/><path d="M42 40h36M42 51h22M42 62h29"/><path d="M77 72v19m-8-8 8 8 8-8"/></svg></span><span className="eyebrow">EXPORTAR</span><h3>Levar minha agenda</h3><div className="data-export-actions"><button className="btn btn-dark" onClick={backup}>Backup completo</button><button className="btn btn-outline-dark" onClick={json}>JSON para Python</button><button className="btn btn-outline-dark" onClick={ics}>Calendário .ics</button></div><small>{data.events.length} compromissos · {data.locations.length} locais</small></section></div>
   </div>;
 }
 
@@ -61,15 +61,18 @@ export function LocationsPanel({ locations, onSave, onDelete }) {
   </div>;
 }
 
-export function PreferencesModal({ preferences, onClose, onSave }) {
+export function AccountModal({ usuario, preferences, onClose, onSave, onDeleteData, onExport, eventCount, locationCount }) {
+  const [name, setName] = useState(usuario || '');
   const [threshold, setThreshold] = useState(preferences.alertThreshold ?? 5);
   const [prep, setPrep] = useState(preferences.defaultPrepMinutes ?? 30);
   const [buffer, setBuffer] = useState(preferences.defaultBufferMinutes ?? 15);
-  const save = () => onSave({ ...preferences, alertThreshold: Number(threshold), defaultPrepMinutes: Number(prep), defaultBufferMinutes: Number(buffer) });
+  const save = () => onSave({ usuario: name.trim(), preferences: { ...preferences, alertThreshold: Number(threshold), defaultPrepMinutes: Number(prep), defaultBufferMinutes: Number(buffer) } });
 
-  return <Modal title="Preferências" onClose={onClose} footer={<><button className="btn btn-light" onClick={onClose}>Cancelar</button><button className="btn btn-dark" onClick={save}>Salvar</button></>}>
-    <p className="muted-copy">Defina os tempos que serão usados em novos compromissos.</p>
-    <div className="preference-fields">{[['default-prep', 'Preparação padrão', prep, setPrep], ['default-buffer', 'Margem padrão', buffer, setBuffer], ['threshold', 'Aviso de atraso', threshold, setThreshold]].map(([id, label, value, setter]) => <div key={id}><label className="form-label" htmlFor={id}>{label} (min)</label><input id={id} className="form-control" type="number" min="0" value={value} onChange={(event) => setter(event.target.value)} /></div>)}</div>
-    <p className="form-hint">O ViaTempo sugere horários, mas não altera alarmes nem compromissos.</p>
+  return <Modal title="Minha conta" onClose={onClose} footer={<><button className="btn btn-light" onClick={onClose}>Cancelar</button><button className="btn btn-dark" onClick={save}>Salvar alterações</button></>}>
+    <div className="preference-fields"><div><label className="form-label" htmlFor="account-name">Como quer ser chamado?</label><input id="account-name" className="form-control" maxLength="60" value={name} onChange={(e)=>setName(e.target.value)} placeholder="Seu nome" /></div>
+    <div className="account-summary"><span><strong>{eventCount}</strong> compromissos</span><span><strong>{locationCount}</strong> locais salvos</span><button className="btn btn-sm btn-outline-dark" onClick={onExport}>Baixar backup</button></div>
+    <p className="muted-copy">Padrões da sua rotina</p>
+    {[["default-prep", "Preparação padrão", prep, setPrep], ["default-buffer", "Margem padrão", buffer, setBuffer], ["threshold", "Aviso de atraso", threshold, setThreshold]].map(([id, label, value, setter]) => <div key={id}><label className="form-label" htmlFor={id}>{label} (min)</label><input id={id} className="form-control" type="number" min="0" value={value} onChange={(event) => setter(event.target.value)} /></div>)}</div>
+    <p className="form-hint">Os dados ficam neste navegador. Esta versão não usa login.</p><button className="btn account-delete-button mt-3" onClick={onDeleteData}><span aria-hidden="true">⌫</span> Apagar meus dados</button>
   </Modal>;
 }
