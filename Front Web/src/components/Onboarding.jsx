@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Brand } from './Primitives';
 import { makeId } from '../services/api';
 import { parseICS, normalizeImportedJSON } from '../utils/calendar';
+import { CalendarImportHelp } from './DataComponents';
 
 const emptyPreferences = { alertThreshold: 5, defaultPrepMinutes: 30, defaultBufferMinutes: 15, notifications: true };
 
@@ -105,7 +106,7 @@ export default function Onboarding({ onComplete }) {
       </div>}
 
       {step === 'import' && <div className="setup-card import-setup"><button className="back-link" onClick={back}>← <span>Voltar</span></button><div className="setup-progress"><span>IMPORTAR ARQUIVO</span><div><i /></div></div><h1>Traga sua<br />agenda.</h1><p className="setup-description">Escolha um arquivo. O ViaTempo identifica o formato.</p>
-        {!preview ? <label className="file-drop"><input type="file" accept=".ics,.json,text/calendar,application/json" onChange={(e) => { readCalendarFile(e.target.files?.[0]); e.target.value = ''; }} /><span className="file-drop-icon">↥</span><strong>{busy ? 'Lendo arquivo…' : 'Selecionar arquivo'}</strong><small>.ics de Google, Apple ou Outlook · JSON ViaTempo ou Python</small></label> : <ImportPreview preview={preview} onCancel={() => setPreview(null)} onConfirm={finishImport} />}
+        {!preview ? <><label className="file-drop"><input type="file" accept=".ics,.json,text/calendar,application/json" onChange={(e) => { readCalendarFile(e.target.files?.[0]); e.target.value = ''; }} /><span className="file-drop-icon">↥</span><strong>{busy ? 'Lendo arquivo…' : 'Selecionar arquivo'}</strong><small>.ics ou JSON</small></label><CalendarImportHelp /></> : <ImportPreview preview={preview} onCancel={() => setPreview(null)} onConfirm={finishImport} />}
         {fileError && <p className="form-alert" role="alert">{fileError}</p>}<button className="skip-setup" onClick={() => onComplete({ events: [], locations: [], preferences: emptyPreferences, feedback: [] })}>Planejar depois</button>
       </div>}
     </section>
