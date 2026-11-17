@@ -171,7 +171,7 @@ export default function App() {
         {view === 'home' && <Dashboard todayEvents={todayEvents} nextEvent={nextEvent} recommendations={recommendations} conflicts={eventConflicts} today={today} placeFull={placeFull} onNew={() => setEventModal({ mode: 'new' })} onEdit={setEventModal} onDelete={setPendingDelete} onFeedback={changeRecommendation} onEventFeedback={recordOutcome} onNavigate={setView} />}
         {view === 'agenda' && <AgendaPage events={sortedEvents} conflicts={eventConflicts} placeFull={placeFull} filter={agendaDate} setFilter={setAgendaDate} onNew={() => setEventModal({ mode: 'new' })} onEdit={setEventModal} onDelete={setPendingDelete} onFeedback={changeRecommendation} onEventFeedback={recordOutcome} />}
         {view === 'places' && <LocationsPanel locations={data.locations} onSave={addPlace} onDelete={removePlace} />}
-        {view === 'data' && <ImportExportPanel data={data} onImport={importData} onDeleteData={deleteAllData} />}
+        {view === 'data' && <ImportExportPanel data={data} onImport={importData} onDeleteData={deleteAllData} onNavigate={setView} />}
       </div>
     </main>
     <Toast message={toast?.message} type={toast?.type} onClose={() => setToast(null)} />

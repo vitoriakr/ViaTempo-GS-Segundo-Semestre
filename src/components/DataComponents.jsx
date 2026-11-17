@@ -10,7 +10,7 @@ function download(name, content, type) {
   URL.revokeObjectURL(link.href);
 }
 
-export function ImportExportPanel({ data, onImport, onDeleteData }) {
+export function ImportExportPanel({ data, onImport, onDeleteData, onNavigate }) {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
@@ -28,12 +28,13 @@ export function ImportExportPanel({ data, onImport, onDeleteData }) {
   }
 
   const json = () => download('viatempo-dados.json', JSON.stringify(toPythonJSON(data), null, 2), 'application/json');
+  const backup = () => download('viatempo-backup.json', JSON.stringify({ ...data, exportedAt: new Date().toISOString(), format: 'viatempo-backup-v1' }, null, 2), 'application/json');
   const ics = () => download('viatempo-agenda.ics', toICS(data.events, data.locations), 'text/calendar;charset=utf-8');
 
   return <div className="data-page">
-    <header className="page-intro"><div><span className="eyebrow">PORTABILIDADE</span><h2>Seus dados</h2></div></header>
-    <section className="content-panel"><h3>Importar agenda</h3><p>JSON ViaTempo, JSON de análise ou calendário .ics.</p><label className="file-button"><input type="file" accept=".ics,.json,text/calendar,application/json" onChange={(event) => { readFile(event.target.files?.[0]); event.target.value = ''; }} />{busy ? 'Lendo arquivo…' : 'Escolher arquivo'}</label>{error && <p className="form-alert" role="alert">{error}</p>}</section>
-    <section className="content-panel"><h3>Exportar</h3><div className="data-actions"><button className="btn btn-dark" onClick={json}>JSON para Python</button><button className="btn btn-outline-dark" onClick={ics}>Calendário .ics</button></div></section>
+    <header className="page-intro data-page-heading"><div><span className="eyebrow">PORTABILIDADE</span><h2>Seus dados</h2><p>Leve sua rotina com você, do seu jeito.</p></div><button className="btn btn-outline-dark" onClick={() => onNavigate('home')}>← Voltar ao início</button></header>
+    <div className="data-board"><section className="data-choice-card"><span className="data-choice-art" aria-hidden="true"><svg viewBox="0 0 120 100"><path d="M23 23h46l19 19v43H23z"/><path d="M69 23v20h19M37 57h36M37 68h24"/><path d="M91 48v34m-12-12 12 12 12-12"/></svg></span><span className="eyebrow">TRAZER PARA CÁ</span><h3>Importar rotina</h3><p>Escolha um arquivo .ics ou JSON. O ViaTempo identifica o formato antes de adicionar os compromissos.</p><label className="btn btn-dark data-file-choice"><input type="file" accept=".ics,.json,text/calendar,application/json" onChange={(event) => { readFile(event.target.files?.[0]); event.target.value = ''; }} />{busy ? 'Lendo arquivo…' : 'Escolher arquivo'}</label>{error && <p className="form-alert" role="alert">{error}</p>}<small>Google, Apple, Outlook, ViaTempo ou Python</small></section>
+      <section className="data-choice-card"><span className="data-choice-art" aria-hidden="true"><svg viewBox="0 0 120 100"><rect x="25" y="20" width="70" height="62" rx="12"/><path d="M42 40h36M42 51h22M42 62h29"/><path d="M77 72v19m-8-8 8 8 8-8"/></svg></span><span className="eyebrow">GUARDAR OU COMPARTILHAR</span><h3>Exportar rotina</h3><p>Faça uma cópia completa para restaurar depois ou gere arquivos para outras ferramentas.</p><div className="data-export-actions"><button className="btn btn-dark" onClick={backup}>Salvar backup completo</button><button className="btn btn-outline-dark" onClick={json}>JSON para Python</button><button className="btn btn-outline-dark" onClick={ics}>Calendário .ics</button></div><small>{data.events.length} compromissos · {data.locations.length} locais</small></section></div>
     <details className="delete-data"><summary>Apagar meus dados</summary><p>Remove compromissos e locais deste navegador.</p><button className="btn btn-outline-dark" onClick={onDeleteData}>Continuar para apagar</button></details>
   </div>;
 }
