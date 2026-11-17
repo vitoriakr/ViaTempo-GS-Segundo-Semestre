@@ -34,7 +34,7 @@ export function Sidebar({ active, onNavigate, open, onClose }) {
 }
 
 export function Topbar({ title, date, onMenu, onAccount, onHome, showHome }) {
-  return <header className="topbar"><button className="mobile-menu d-lg-none" onClick={onMenu} aria-label="Abrir menu"><Icon name="menu" /></button>{showHome && <button className="topbar-home" onClick={onHome}>← Início</button>}<div className="topbar-title"><span>{date}</span><h1>{title}</h1></div><button className="preferences-button" onClick={onAccount}>Conta</button></header>;
+  return <header className="topbar"><button className="mobile-menu d-lg-none" onClick={onMenu} aria-label="Abrir menu"><Icon name="menu" /></button>{showHome && <button className="topbar-home" onClick={onHome}><span aria-hidden="true">←</span> Início</button>}<div className="topbar-title"><span>{date}</span><h1>{title}</h1></div><button className="account-icon-button" onClick={onAccount} aria-label="Abrir conta" title="Conta"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c.7-3.3 3.2-5 7-5s6.3 1.7 7 5"/></svg></button></header>;
 }
 
 export function Toast({ message, type = 'success', onClose }) {

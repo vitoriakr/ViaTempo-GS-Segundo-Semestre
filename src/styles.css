@@ -234,3 +234,31 @@ body{background:radial-gradient(ellipse at 80% 8%,rgba(169,201,255,.28),transpar
 .data-board+.delete-data{margin-top:8px}
 @media(max-width:700px){.data-board{grid-template-columns:1fr;border-radius:21px}.data-choice-card{min-height:310px;padding:21px}.data-page-heading{align-items:flex-start}.data-page-heading .btn{flex:none;font-size:10px}.data-export-actions{display:grid;width:100%}.data-export-actions .btn{width:100%}}
 @media(prefers-reduced-transparency:reduce){.data-board,.data-choice-card{backdrop-filter:none;-webkit-backdrop-filter:none;background:#fff}}
+
+.account-icon-button{width:42px;height:42px;display:grid;place-items:center;border:1px solid rgba(44,105,200,.2);border-radius:50%;background:rgba(255,255,255,.84);color:#275da8;box-shadow:0 5px 16px rgba(43,87,151,.12);cursor:pointer;transition:transform .16s ease,box-shadow .16s ease}
+.account-icon-button svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.account-icon-button:hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(43,87,151,.18)}
+.topbar-home,.data-back-button{display:inline-flex;align-items:center;gap:8px;border:1px solid rgba(44,105,200,.25);border-radius:13px;background:linear-gradient(145deg,#fff,#eaf2ff);color:#24549a;font-weight:650;box-shadow:0 5px 16px rgba(43,87,151,.1);cursor:pointer}
+.topbar-home{padding:9px 15px;font-size:12px}.topbar-home:hover,.data-back-button:hover{background:#e2edff;color:#173e78;box-shadow:0 7px 19px rgba(43,87,151,.17)}
+.data-back-button{padding:10px 17px;font-size:13px}
+.account-delete-button{display:inline-flex;align-items:center;gap:9px;padding:11px 16px;border:1px solid #e6a9af;border-radius:11px;background:#fff4f4;color:#9d2534;font-size:12px;font-weight:650;box-shadow:0 4px 13px rgba(157,37,52,.08)}
+.account-delete-button:hover{border-color:#c84655;background:#fee9eb;color:#821c29}
+.account-delete-button span{font-size:17px}
+@media(max-width:600px){.topbar-home{padding:8px 10px;font-size:11px}.account-icon-button{width:38px;height:38px}.data-back-button{padding:9px 13px}}
+
+/* Cleaner, taller file actions with a clear focal point. */
+.data-page-heading>div>p{display:none}
+.data-board{max-width:1180px;min-height:520px;align-items:stretch;gap:24px;padding:26px;border-radius:30px;background:radial-gradient(ellipse at 18% 8%,rgba(181,210,255,.27),transparent 48%),rgba(255,255,255,.48)}
+.data-choice-card{justify-content:center;min-height:455px;padding:clamp(28px,4vw,54px);border-radius:25px}
+.data-choice-card:first-child{background:linear-gradient(150deg,rgba(255,255,255,.91),rgba(231,241,255,.72))}
+.data-choice-card:last-child{background:linear-gradient(150deg,rgba(255,255,255,.86),rgba(241,246,255,.66))}
+.data-choice-art{width:142px;height:128px;margin-bottom:26px;border-radius:30px;box-shadow:0 12px 30px rgba(44,105,200,.1),inset 0 1px 0 #fff}
+.data-choice-art svg{width:116px;height:98px}
+.data-choice-card h3{margin:9px 0 20px;font-size:27px}
+.data-choice-card>small{margin-top:20px;padding-top:0}
+.data-file-choice{min-width:185px;justify-content:center;padding:12px 18px;border-radius:12px;font-size:13px}
+.data-export-actions{display:grid;width:min(100%,330px);gap:10px;margin-top:0}
+.data-export-actions .btn{padding:12px 15px;border-radius:11px;text-align:left;font-size:12px}
+.account-summary{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin:4px 0 18px;padding:12px;border:1px solid #e4ecf8;border-radius:12px;background:#f6f9ff;color:#66758d;font-size:12px}
+.account-summary span{margin-right:8px}.account-summary strong{color:#214f91;font-size:15px}.account-summary .btn{margin-left:auto}
+@media(max-width:700px){.data-board{min-height:0;padding:12px;gap:13px}.data-choice-card{min-height:330px;padding:24px}.data-choice-art{width:112px;height:102px}.data-choice-art svg{width:95px;height:80px}.data-choice-card h3{font-size:23px;margin-bottom:16px}.data-export-actions{width:100%}}

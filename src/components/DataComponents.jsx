@@ -32,10 +32,9 @@ export function ImportExportPanel({ data, onImport, onDeleteData, onNavigate }) 
   const ics = () => download('viatempo-agenda.ics', toICS(data.events, data.locations), 'text/calendar;charset=utf-8');
 
   return <div className="data-page">
-    <header className="page-intro data-page-heading"><div><span className="eyebrow">PORTABILIDADE</span><h2>Seus dados</h2><p>Leve sua rotina com você, do seu jeito.</p></div><button className="btn btn-outline-dark" onClick={() => onNavigate('home')}>← Voltar ao início</button></header>
-    <div className="data-board"><section className="data-choice-card"><span className="data-choice-art" aria-hidden="true"><svg viewBox="0 0 120 100"><path d="M23 23h46l19 19v43H23z"/><path d="M69 23v20h19M37 57h36M37 68h24"/><path d="M91 48v34m-12-12 12 12 12-12"/></svg></span><span className="eyebrow">TRAZER PARA CÁ</span><h3>Importar rotina</h3><p>Escolha um arquivo .ics ou JSON. O ViaTempo identifica o formato antes de adicionar os compromissos.</p><label className="btn btn-dark data-file-choice"><input type="file" accept=".ics,.json,text/calendar,application/json" onChange={(event) => { readFile(event.target.files?.[0]); event.target.value = ''; }} />{busy ? 'Lendo arquivo…' : 'Escolher arquivo'}</label>{error && <p className="form-alert" role="alert">{error}</p>}<small>Google, Apple, Outlook, ViaTempo ou Python</small></section>
-      <section className="data-choice-card"><span className="data-choice-art" aria-hidden="true"><svg viewBox="0 0 120 100"><rect x="25" y="20" width="70" height="62" rx="12"/><path d="M42 40h36M42 51h22M42 62h29"/><path d="M77 72v19m-8-8 8 8 8-8"/></svg></span><span className="eyebrow">GUARDAR OU COMPARTILHAR</span><h3>Exportar rotina</h3><p>Faça uma cópia completa para restaurar depois ou gere arquivos para outras ferramentas.</p><div className="data-export-actions"><button className="btn btn-dark" onClick={backup}>Salvar backup completo</button><button className="btn btn-outline-dark" onClick={json}>JSON para Python</button><button className="btn btn-outline-dark" onClick={ics}>Calendário .ics</button></div><small>{data.events.length} compromissos · {data.locations.length} locais</small></section></div>
-    <details className="delete-data"><summary>Apagar meus dados</summary><p>Remove compromissos e locais deste navegador.</p><button className="btn btn-outline-dark" onClick={onDeleteData}>Continuar para apagar</button></details>
+    <header className="page-intro data-page-heading"><div><span className="eyebrow">PORTABILIDADE</span><h2>Importar e exportar</h2></div><button className="btn data-back-button" onClick={() => onNavigate('home')}><span aria-hidden="true">←</span> Início</button></header>
+    <div className="data-board"><section className="data-choice-card"><span className="data-choice-art" aria-hidden="true"><svg viewBox="0 0 120 100"><path d="M23 23h46l19 19v43H23z"/><path d="M69 23v20h19M37 57h36M37 68h24"/><path d="M91 48v34m-12-12 12 12 12-12"/></svg></span><span className="eyebrow">IMPORTAR</span><h3>Trazer arquivos</h3><label className="btn btn-dark data-file-choice"><input type="file" accept=".ics,.json,text/calendar,application/json" onChange={(event) => { readFile(event.target.files?.[0]); event.target.value = ''; }} />{busy ? 'Lendo arquivo…' : 'Selecionar arquivo'}</label>{error && <p className="form-alert" role="alert">{error}</p>}<small>.ics · JSON · calendário</small></section>
+      <section className="data-choice-card"><span className="data-choice-art" aria-hidden="true"><svg viewBox="0 0 120 100"><rect x="25" y="20" width="70" height="62" rx="12"/><path d="M42 40h36M42 51h22M42 62h29"/><path d="M77 72v19m-8-8 8 8 8-8"/></svg></span><span className="eyebrow">EXPORTAR</span><h3>Levar minha agenda</h3><div className="data-export-actions"><button className="btn btn-dark" onClick={backup}>Backup completo</button><button className="btn btn-outline-dark" onClick={json}>JSON para Python</button><button className="btn btn-outline-dark" onClick={ics}>Calendário .ics</button></div><small>{data.events.length} compromissos · {data.locations.length} locais</small></section></div>
   </div>;
 }
 
@@ -62,7 +61,7 @@ export function LocationsPanel({ locations, onSave, onDelete }) {
   </div>;
 }
 
-export function AccountModal({ usuario, preferences, onClose, onSave, onDeleteData }) {
+export function AccountModal({ usuario, preferences, onClose, onSave, onDeleteData, onExport, eventCount, locationCount }) {
   const [name, setName] = useState(usuario || '');
   const [threshold, setThreshold] = useState(preferences.alertThreshold ?? 5);
   const [prep, setPrep] = useState(preferences.defaultPrepMinutes ?? 30);
@@ -71,8 +70,9 @@ export function AccountModal({ usuario, preferences, onClose, onSave, onDeleteDa
 
   return <Modal title="Minha conta" onClose={onClose} footer={<><button className="btn btn-light" onClick={onClose}>Cancelar</button><button className="btn btn-dark" onClick={save}>Salvar alterações</button></>}>
     <div className="preference-fields"><div><label className="form-label" htmlFor="account-name">Como quer ser chamado?</label><input id="account-name" className="form-control" maxLength="60" value={name} onChange={(e)=>setName(e.target.value)} placeholder="Seu nome" /></div>
-    <p className="muted-copy">Padrões usados ao criar compromissos</p>
+    <div className="account-summary"><span><strong>{eventCount}</strong> compromissos</span><span><strong>{locationCount}</strong> locais salvos</span><button className="btn btn-sm btn-outline-dark" onClick={onExport}>Baixar backup</button></div>
+    <p className="muted-copy">Padrões da sua rotina</p>
     {[["default-prep", "Preparação padrão", prep, setPrep], ["default-buffer", "Margem padrão", buffer, setBuffer], ["threshold", "Aviso de atraso", threshold, setThreshold]].map(([id, label, value, setter]) => <div key={id}><label className="form-label" htmlFor={id}>{label} (min)</label><input id={id} className="form-control" type="number" min="0" value={value} onChange={(event) => setter(event.target.value)} /></div>)}</div>
-    <p className="form-hint">Os dados ficam neste navegador. Esta versão não usa login.</p><button className="btn btn-outline-dark mt-3" onClick={onDeleteData}>Apagar meus dados</button>
+    <p className="form-hint">Os dados ficam neste navegador. Esta versão não usa login.</p><button className="btn account-delete-button mt-3" onClick={onDeleteData}><span aria-hidden="true">⌫</span> Apagar meus dados</button>
   </Modal>;
 }
