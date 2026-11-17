@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { buildRecommendation, formatDate, formatTime } from '../utils/schedule';
+import { TecaAvatar } from './Teca';
 
 const prompts = ['Planejar meu dia', 'E amanhã?', 'O que vem agora?', 'Como ganho XP?'];
 
@@ -42,10 +43,6 @@ function answer(question, context) {
   return 'Posso resumir seu dia, conferir conflitos ou ajudar com a preparação para o próximo compromisso.';
 }
 
-function TurtleFace({ skin = 'shell-starter' }) {
-  return <svg className={`turtle-face ${skin}`} viewBox="0 0 64 64" aria-hidden="true"><path className="turtle-body" d="M25 14c-4-3-8-1-9 3l-3 5c-4 2-5 7-2 10l-2 6c-1 4 2 7 6 6l7-4h20l7 4c4 1 7-2 6-6l-2-6c3-3 2-8-2-10l-3-5c-1-4-5-6-9-3"/><ellipse className="turtle-shell" cx="32" cy="34" rx="17" ry="14"/><path className="shell-mark" d="M32 20v28M16 31h32M21 24l11 7 11-7M21 42l11-7 11 7"/><circle className="turtle-head" cx="32" cy="13" r="9"/><circle className="turtle-eye" cx="28.5" cy="12" r="1.4"/><circle className="turtle-eye" cx="35.5" cy="12" r="1.4"/><path className="turtle-smile" d="M29 16q3 3 6 0"/><circle className="turtle-cheek" cx="25" cy="15" r="1.5"/><circle className="turtle-cheek" cx="39" cy="15" r="1.5"/></svg>;
-}
-
 export default function AssistantWidget({ todayEvents, events, nextEvent, conflicts, recommendations, onFeedback }) {
   const [open, setOpen] = useState(false);
   const [question, setQuestion] = useState('');
@@ -69,7 +66,7 @@ export default function AssistantWidget({ todayEvents, events, nextEvent, confli
   }
   return <div className="assistant-widget">
     {open && <section id="assistant-panel" className="assistant-panel" role="dialog" aria-modal="false" aria-labelledby="assistant-title">
-      <header className="assistant-widget-header"><span className={`assistant-avatar ${shell}`}><TurtleFace skin={shell} /></span><div><h2 id="assistant-title">Teca</h2><p>Sua tartaruga do tempo · nível {level}</p></div><span className="teca-xp">{xp} XP</span><button className="assistant-close" onClick={() => setOpen(false)} aria-label="Fechar assistente">×</button></header>
+      <header className={`assistant-widget-header ${shell}`}><span className="assistant-avatar"><TecaAvatar level={level} /></span><div><h2 id="assistant-title">Teca</h2><p>Sua tartaruga do tempo · nível {level}</p></div><span className="teca-xp">{xp} XP</span><button className="assistant-close" onClick={() => setOpen(false)} aria-label="Fechar assistente">×</button></header>
       <div className="assistant-widget-content">
         <div className="assistant-overview"><span className="eyebrow">PASSO A PASSO, NO TEMPO CERTO</span><p>{makeSummary(context)}</p><small className="teca-motto">— Teca, sua parceira de jornada</small></div>
         {recommendations.length > 0 && <section className="assistant-widget-recs" aria-label="Sugestões para sua agenda"><h3>Sugestões para hoje</h3>{recommendations.slice(0, 3).map(({ event, plan, type }) => <article className="assistant-recommendation" key={event.id}><p><strong>{event.title}</strong>{type === 'delay' ? ` · saída ${formatTime(plan.departure)} → ${formatTime(plan.recommendedDeparture)}` : type === 'margin' ? ' · adicionar 5 min de margem' : ' · confira esta recomendação'}</p>{type === 'delay' && <button className="btn btn-sm btn-dark" onClick={() => onFeedback(event, 'accepted')}>Mudar horário</button>}{type === 'margin' && <button className="btn btn-sm btn-dark" onClick={() => onFeedback(event, 'margin')}>Adicionar 5 min</button>}</article>)}</section>}
@@ -78,6 +75,6 @@ export default function AssistantWidget({ todayEvents, events, nextEvent, confli
         <form className="assistant-form" onSubmit={(event) => { event.preventDefault(); ask(); }}><input className="form-control" value={question} onChange={(event) => setQuestion(event.target.value)} placeholder="Pergunte sobre sua rotina" aria-label="Pergunte sobre sua rotina" /><button className="btn btn-dark" type="submit">Enviar</button></form>
       </div>
     </section>}
-    <button className={`assistant-launcher teca-launcher ${open ? ' is-open' : ''}`} onClick={() => setOpen((value) => !value)} aria-label={open ? 'Fechar conversa com Teca' : 'Conversar com Teca, sua tartaruga do tempo'} aria-expanded={open} aria-controls="assistant-panel"><TurtleFace skin={shell} />{!open && <span className="teca-name-tag">Teca</span>}{!open && recommendations.length > 0 && <span className="assistant-badge">{recommendations.length}</span>}</button>
+    <button className={`assistant-launcher teca-launcher ${open ? ' is-open' : ''}`} onClick={() => setOpen((value) => !value)} aria-label={open ? 'Fechar conversa com Teca' : 'Conversar com Teca, sua tartaruga do tempo'} aria-expanded={open} aria-controls="assistant-panel"><TecaAvatar level={level} />{!open && <span className="teca-name-tag">Teca</span>}{!open && recommendations.length > 0 && <span className="assistant-badge">{recommendations.length}</span>}</button>
   </div>;
 }
