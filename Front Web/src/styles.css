@@ -339,3 +339,15 @@ body{background:radial-gradient(ellipse at 80% 8%,rgba(169,201,255,.28),transpar
 .teca-tip{display:flex;align-items:center;gap:9px;margin:0 0 10px;padding:8px 10px;border:1px solid rgba(111,164,111,.18);border-radius:12px;background:linear-gradient(105deg,rgba(241,250,238,.9),rgba(255,255,255,.72))}.teca-tip-avatar{width:34px;height:34px;padding:3px;border-radius:11px;background:#e3f2df}.teca-tip-copy{min-width:0}.teca-tip-copy>span{display:block;color:#4e8052;font-size:9px;font-weight:750;letter-spacing:.06em;text-transform:uppercase}.teca-tip-copy p{margin:2px 0 0;color:#50644e;font-size:11px;line-height:1.35}
 .recommendation-card{border-left:3px solid #7baa70}.journey-plan .teca-tip{margin:10px 0 0}.journey-plan .teca-tip-copy p{font-size:10px}
 @media(max-width:600px){.teca-tip{align-items:flex-start}.teca-tip-avatar{width:30px;height:30px}}
+
+/* Keep calendar views compact, especially when a period has no events. */
+.week-calendar-scroll{max-height:min(54vh,570px)}
+.week-time-gutter,.week-day-column{height:690px}
+.week-calendar-body{min-width:0}
+.calendar-empty{min-height:210px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:25px;border:1px dashed rgba(74,117,180,.28);border-radius:15px;background:linear-gradient(145deg,rgba(246,250,255,.84),rgba(233,242,255,.58));text-align:center}
+.calendar-empty>span{color:#6190d1;font-size:31px}.calendar-empty strong{color:#415674;font-size:13px;font-weight:600}.month-cell{min-height:76px}.month-event-list:empty{min-height:12px}
+.calendar-import-help{width:100%;margin-top:12px;border-top:1px solid rgba(70,105,155,.12);padding-top:10px}
+.calendar-import-help summary{list-style:none;cursor:pointer;color:#2c69c8;font-size:12px;font-weight:650}
+.calendar-import-help summary::-webkit-details-marker{display:none}.calendar-import-help summary:after{content:'+';float:right;font-size:16px;line-height:14px}.calendar-import-help[open] summary:after{content:'−'}
+.calendar-help-content{display:grid;gap:8px;margin-top:11px}.calendar-help-content p{display:grid;gap:2px;margin:0;color:#65748a;font-size:11px;line-height:1.4}.calendar-help-content strong{color:#304662;font-size:11px}
+@media(max-width:600px){.week-time-gutter,.week-day-column{height:690px}.calendar-empty{min-height:175px}.calendar-help-content p{font-size:10px}}
