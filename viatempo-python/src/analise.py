@@ -125,7 +125,7 @@ def montar_relatorio(historico, destino):
                f"   Não seguiram a recomendação: {nao_seguiu[0]:5.1f}% no horário "
                f"(atraso médio {nao_seguiu[1]:.1f} min, {nao_seguiu[2]} registros)"]
 
-    decisoes = ler_json("historico_recomendacoes.json", [], PASTA_SAIDA)
+    decisoes = ler_json("historico_recomendacoes.json", [])
     if decisoes:
         aceitas = sum(1 for d in decisoes if d["decisao"] == "Aceitar")
         linhas.append(f"   Recomendações aceitas: {aceitas} de {len(decisoes)}")

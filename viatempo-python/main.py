@@ -66,7 +66,9 @@ def ver_meu_dia(dados):
         return
 
     print(f"\n===== MEU DIA – {data} =====")
-    planos = calcular_plano(c, dados["usuario"], dados["locais"], dados["historico"])
+    planos = []
+    for c in do_dia:
+        planos.append(calcular_plano(c, dados["usuario"], dados["locais"], dados["historico"]))
     for plano in planos:
         mostrar_plano(plano)
 
@@ -181,7 +183,7 @@ def simular_mudanca(dados):
     escolhido = escolher_compromisso_com_destino(dados)
     if escolhido is None:
         return
-    plano = calcular_plano(c, dados["usuario"], dados["locais"], dados["historico"])
+    plano = calcular_plano(escolhido, dados["usuario"], dados["locais"], dados["historico"])
     if not plano["saida"]:
         print("  Esse compromisso não tem horário de saída viável.")
         return
@@ -195,7 +197,7 @@ def simular_mudanca(dados):
     dados["locais"], dados["historico"], minutos)
     if recomendacao is None:
         print(f"\nA mudança ainda é menor que {dados['usuario']['limite_variacao']} min. "
-              "Nenhum aviso enviado (RN03).")
+            "Nenhum aviso enviado (RN03).")
         return
 
     print(f"\n[!] {recomendacao['causa']} ({recomendacao['impacto']})")
@@ -220,8 +222,30 @@ def simular_mudanca(dados):
         print(f"Recomendação aceita! O compromisso agora considera +{recomendacao['impacto_min']} min.")
     else:
         print("Recomendação rejeitada. Seu plano continua igual.")
+        
     registrar_decisao(plano, recomendacao, decisao)
-    salvar_plano_para_front(plano, dados["usuario"], recomendacao)
+
+    # Recalcula todos os compromissos da data após a decisão.
+    data = escolhido["data"]
+    compromissos = compromissos_da_data(dados["compromissos"], data)
+
+    planos = []
+    for compromisso in compromissos:
+        planos.append(calcular_plano(
+            compromisso,
+            dados["usuario"],
+            dados["locais"],
+            dados["historico"]
+        ))
+
+    alerta = {
+        "causa": recomendacao["causa"],
+        "impacto": recomendacao["impacto"],
+        "decisao": decisao,
+        "nova_saida": recomendacao["nova_saida"]
+    }
+
+    salvar_plano_para_front(planos, dados["usuario"], data, alerta)
 
 
 def registrar_feedback(dados):

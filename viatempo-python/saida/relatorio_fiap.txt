@@ -1,0 +1,35 @@
+===== RELATÓRIO DE DADOS – FIAP (680 viagens) =====
+
+1) Tempo médio de trajeto por hora de saída (dias normais):
+   05h  ████████████                         24.8 min
+   06h  █████████████                        25.8 min
+   07h  ████████████████████                 39.1 min
+   08h  ███████████████████████              46.1 min
+   09h  █████████████                        26.2 min
+   10h  █████████████                        25.0 min
+   16h  █████████████                        25.5 min
+   17h  ███████████████████                  37.4 min
+   18h  █████████████████████                42.7 min
+   19h  █████████████                        26.5 min
+
+2) Melhor e pior horário para sair de manhã:
+   Melhor: 05:45 → 24.7 min
+   Pior:   08:00 → 54.2 min
+   Diferença: 29.6 min por dia ≈ 10.8 horas por mês
+
+3) Impacto de eventos no trajeto (comparado com o mesmo horário normal):
+   Chuva     +10.0 min em média (102 viagens)
+   Acidente  +14.3 min em média (30 viagens)
+
+4) Pontualidade dos usuários (feedback):
+   Seguiram a recomendação:      82.3% no horário (atraso médio 0.9 min, 62 registros)
+   Não seguiram a recomendação:  39.5% no horário (atraso médio 8.1 min, 38 registros)
+   Recomendações aceitas: 1 de 2
+
+5) O que os dados mostram (decisão):
+   Sair às 05:45 em vez de 08:00 economiza ~30 min de trajeto por dia.
+   Por isso o ViaTempo calcula a saída com a média do horário real (e não com um
+   tempo fixo) e avisa quando chuva, acidente ou obra aumentam o trajeto.
+   Quem seguiu as recomendações chegou no horário 43 pontos percentuais mais vezes.
+
+   Gráfico salvo em: saida/grafico_fiap.png

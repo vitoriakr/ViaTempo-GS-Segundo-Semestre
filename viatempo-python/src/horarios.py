@@ -7,9 +7,10 @@ def texto_para_minutos(texto):
     return int(horas) * 60 + int(minutos)
 
 
+
 def minutos_para_texto(minutos):
-    """Converte 435 em '07:15'."""
-    minutos = round(minutos)
+    """Converte minutos em horário no formato HH:MM."""
+    minutos = round(minutos) % (24 * 60)
     return f"{minutos // 60:02d}:{minutos % 60:02d}"
 
 

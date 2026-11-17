@@ -1,19 +1,36 @@
 {
   "usuario": "Marina",
-  "data": "2026-11-25",
+  "data": "2026-11-20",
   "compromissos": [
     {
-      "id": 5,
-      "titulo": "Chamada com o orientador",
-      "horario": "10:30",
-      "destino": null,
-      "saida": null,
-      "despertar": "10:25",
-      "trajeto_min": 0,
-      "fonte": null,
-      "urgencia": "verde",
-      "mensagem": "Compromisso sem deslocamento."
+      "id": 4,
+      "titulo": "Reunião de grupo",
+      "horario": "09:00",
+      "destino": "FIAP",
+      "saida": "07:52",
+      "despertar": "07:07",
+      "trajeto_min": 53,
+      "fonte": "histórico",
+      "urgencia": "amarelo",
+      "mensagem": "Atenção: o trânsito está começando a piorar."
+    },
+    {
+      "id": 7,
+      "titulo": "academia",
+      "horario": "18:00",
+      "destino": "sarandi",
+      "saida": "17:04",
+      "despertar": "16:44",
+      "trajeto_min": 35,
+      "fonte": "modelo matemático",
+      "urgencia": "amarelo",
+      "mensagem": "Atenção: o trânsito está começando a piorar."
     }
   ],
-  "alerta": null
+  "alerta": {
+    "causa": "Obra no caminho",
+    "impacto": "até +10 min",
+    "decisao": "Aceitar",
+    "nova_saida": "17:04"
+  }
 }

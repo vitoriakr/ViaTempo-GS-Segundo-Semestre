@@ -58,5 +58,15 @@
     "duracao_min": 50,
     "preparacao": 20,
     "margem": 10
+  },
+  {
+    "id": 7,
+    "titulo": "academia",
+    "data": "2026-11-20",
+    "horario": "18:00",
+    "destino": "sarandi",
+    "duracao_min": 60,
+    "preparacao": 20,
+    "margem": 20
   }
 ]
