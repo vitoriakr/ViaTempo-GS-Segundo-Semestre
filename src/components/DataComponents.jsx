@@ -62,15 +62,17 @@ export function LocationsPanel({ locations, onSave, onDelete }) {
   </div>;
 }
 
-export function PreferencesModal({ preferences, onClose, onSave }) {
+export function AccountModal({ usuario, preferences, onClose, onSave, onDeleteData }) {
+  const [name, setName] = useState(usuario || '');
   const [threshold, setThreshold] = useState(preferences.alertThreshold ?? 5);
   const [prep, setPrep] = useState(preferences.defaultPrepMinutes ?? 30);
   const [buffer, setBuffer] = useState(preferences.defaultBufferMinutes ?? 15);
-  const save = () => onSave({ ...preferences, alertThreshold: Number(threshold), defaultPrepMinutes: Number(prep), defaultBufferMinutes: Number(buffer) });
+  const save = () => onSave({ usuario: name.trim(), preferences: { ...preferences, alertThreshold: Number(threshold), defaultPrepMinutes: Number(prep), defaultBufferMinutes: Number(buffer) } });
 
-  return <Modal title="Preferências" onClose={onClose} footer={<><button className="btn btn-light" onClick={onClose}>Cancelar</button><button className="btn btn-dark" onClick={save}>Salvar</button></>}>
-    <p className="muted-copy">Defina os tempos que serão usados em novos compromissos.</p>
-    <div className="preference-fields">{[['default-prep', 'Preparação padrão', prep, setPrep], ['default-buffer', 'Margem padrão', buffer, setBuffer], ['threshold', 'Aviso de atraso', threshold, setThreshold]].map(([id, label, value, setter]) => <div key={id}><label className="form-label" htmlFor={id}>{label} (min)</label><input id={id} className="form-control" type="number" min="0" value={value} onChange={(event) => setter(event.target.value)} /></div>)}</div>
-    <p className="form-hint">O ViaTempo sugere horários, mas não altera alarmes nem compromissos.</p>
+  return <Modal title="Minha conta" onClose={onClose} footer={<><button className="btn btn-light" onClick={onClose}>Cancelar</button><button className="btn btn-dark" onClick={save}>Salvar alterações</button></>}>
+    <div className="preference-fields"><div><label className="form-label" htmlFor="account-name">Como quer ser chamado?</label><input id="account-name" className="form-control" maxLength="60" value={name} onChange={(e)=>setName(e.target.value)} placeholder="Seu nome" /></div>
+    <p className="muted-copy">Padrões usados ao criar compromissos</p>
+    {[["default-prep", "Preparação padrão", prep, setPrep], ["default-buffer", "Margem padrão", buffer, setBuffer], ["threshold", "Aviso de atraso", threshold, setThreshold]].map(([id, label, value, setter]) => <div key={id}><label className="form-label" htmlFor={id}>{label} (min)</label><input id={id} className="form-control" type="number" min="0" value={value} onChange={(event) => setter(event.target.value)} /></div>)}</div>
+    <p className="form-hint">Os dados ficam neste navegador. Esta versão não usa login.</p><button className="btn btn-outline-dark mt-3" onClick={onDeleteData}>Apagar meus dados</button>
   </Modal>;
 }

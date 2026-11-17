@@ -33,8 +33,8 @@ export function Sidebar({ active, onNavigate, open, onClose }) {
   </>;
 }
 
-export function Topbar({ title, date, onMenu, onPreferences }) {
-  return <header className="topbar"><button className="mobile-menu d-lg-none" onClick={onMenu} aria-label="Abrir menu"><Icon name="menu" /></button><div className="topbar-title"><span>{date}</span><h1>{title}</h1></div><button className="preferences-button" onClick={onPreferences}>Preferências</button></header>;
+export function Topbar({ title, date, onMenu, onAccount, onHome, showHome }) {
+  return <header className="topbar"><button className="mobile-menu d-lg-none" onClick={onMenu} aria-label="Abrir menu"><Icon name="menu" /></button>{showHome && <button className="topbar-home" onClick={onHome}>← Início</button>}<div className="topbar-title"><span>{date}</span><h1>{title}</h1></div><button className="preferences-button" onClick={onAccount}>Conta</button></header>;
 }
 
 export function Toast({ message, type = 'success', onClose }) {

@@ -3,7 +3,7 @@ import { api, makeId } from '../services/api';
 import { todayISO, buildRecommendation, findScheduleConflicts, formatDate, formatTime } from '../utils/schedule';
 import { Sidebar, Topbar, Toast, Modal, Brand } from './Primitives';
 import { EmptyState, EventCard, EventModal, RecommendationMessage } from './EventComponents';
-import { ImportExportPanel, LocationsPanel, PreferencesModal } from './DataComponents';
+import { ImportExportPanel, LocationsPanel, AccountModal } from './DataComponents';
 import Onboarding from './Onboarding';
 import AssistantWidget from './Assistant';
 
@@ -15,7 +15,7 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
   const [eventModal, setEventModal] = useState(null);
-  const [preferencesOpen, setPreferencesOpen] = useState(false);
+  const [accountOpen, setAccountOpen] = useState(false);
   const [agendaDate, setAgendaDate] = useState('');
   const [toast, setToast] = useState(null);
   const [pendingDelete, setPendingDelete] = useState(null);
@@ -146,9 +146,9 @@ export default function App() {
     } catch (error) { setToast({ message: `A importação não foi salva: ${error.message}`, type: 'error' }); }
   }
 
-  async function savePreferences(preferences) {
-    const next = { ...data, preferences };
-    try { await api.save(next); setData(next); setPreferencesOpen(false); setToast({ message: 'Preferências atualizadas.', type: 'success' }); }
+  async function saveAccount({ usuario, preferences }) {
+    const next = { ...data, usuario, preferences };
+    try { await api.save(next); setData(next); setAccountOpen(false); setToast({ message: 'Conta atualizada.', type: 'success' }); }
     catch (error) { setToast({ message: `Não foi possível salvar: ${error.message}`, type: 'error' }); }
   }
 
@@ -166,7 +166,7 @@ export default function App() {
 
   return <div className="app-frame">
     <Sidebar active={view} onNavigate={(next) => { setView(next); setMenuOpen(false); }} open={menuOpen} onClose={() => setMenuOpen(false)} />
-    <main className="main-area"><Topbar title={viewTitles[view]} date={formattedToday} onMenu={() => setMenuOpen(true)} onPreferences={() => setPreferencesOpen(true)} />
+    <main className="main-area"><Topbar title={viewTitles[view]} date={formattedToday} onMenu={() => setMenuOpen(true)} onAccount={() => setAccountOpen(true)} showHome={view !== 'home'} onHome={() => setView('home')} />
       <div className="page-body">
         {view === 'home' && <Dashboard todayEvents={todayEvents} nextEvent={nextEvent} recommendations={recommendations} conflicts={eventConflicts} today={today} placeFull={placeFull} onNew={() => setEventModal({ mode: 'new' })} onEdit={setEventModal} onDelete={setPendingDelete} onFeedback={changeRecommendation} onEventFeedback={recordOutcome} onNavigate={setView} />}
         {view === 'agenda' && <AgendaPage events={sortedEvents} conflicts={eventConflicts} placeFull={placeFull} filter={agendaDate} setFilter={setAgendaDate} onNew={() => setEventModal({ mode: 'new' })} onEdit={setEventModal} onDelete={setPendingDelete} onFeedback={changeRecommendation} onEventFeedback={recordOutcome} />}
@@ -177,7 +177,7 @@ export default function App() {
     <Toast message={toast?.message} type={toast?.type} onClose={() => setToast(null)} />
     {eventModal && <EventModal event={eventModal.mode === 'new' ? null : eventModal} initialDate={agendaDate || today} locations={data.locations} preferences={data.preferences} onClose={() => setEventModal(null)} onSave={saveEvent} />}
     <AssistantWidget todayEvents={todayEvents} events={sortedEvents} nextEvent={nextEvent} conflicts={eventConflicts} recommendations={recommendations} onFeedback={changeRecommendation} />
-    {preferencesOpen && <PreferencesModal preferences={data.preferences} onClose={() => setPreferencesOpen(false)} onSave={savePreferences} />}
+    {accountOpen && <AccountModal usuario={data.usuario} preferences={data.preferences} onClose={() => setAccountOpen(false)} onSave={saveAccount} onDeleteData={deleteAllData} />}
     {pendingDelete && <Modal title={pendingDelete.all ? 'Apagar seus dados?' : 'Excluir compromisso?'} eyebrow="CONFIRMAR AÇÃO" onClose={() => setPendingDelete(null)} footer={<><button className="btn btn-light" onClick={() => setPendingDelete(null)}>Cancelar</button><button className="btn btn-danger" onClick={pendingDelete.all ? confirmDeleteAll : deleteEvent}>{pendingDelete.all ? 'Apagar dados' : 'Excluir compromisso'}</button></>}><p>Confirme que deseja {pendingDelete.all ? pendingDelete.title : `remover “${pendingDelete.title}” da sua agenda`}. Essa ação não pode ser desfeita.</p></Modal>}
   </div>;
 }
@@ -216,7 +216,7 @@ function AgendaPage({ events, conflicts, placeFull, filter, setFilter, onNew, on
   function openEvent(event) { onEdit(event); }
   return <><header className="page-intro"><div><span className="eyebrow">SEUS COMPROMISSOS</span><h2>Agenda</h2></div><button className="btn btn-dark" onClick={() => onNew()}>＋ Novo compromisso</button></header>
     <section className="agenda-panel calendar-panel">
-      <div className="calendar-toolbar"><div className="calendar-navigation"><button className="calendar-arrow" aria-label="Período anterior" onClick={() => shiftPeriod(-1)}>‹</button><button className="calendar-arrow" aria-label="Próximo período" onClick={() => shiftPeriod(1)}>›</button><button className="btn btn-outline-dark calendar-today" onClick={() => { setAnchor(todayISO()); setFilter(''); }}>Hoje</button><h3>{periodTitle}</h3></div><div className="calendar-controls"><div className="calendar-modes" role="tablist" aria-label="Visualização da agenda">{[['day','Dia'],['week','Semana'],['month','Mês'],['list','Lista']].map(([value,label])=><button key={value} role="tab" aria-selected={mode===value} className={mode===value?'active':''} onClick={()=>setMode(value)}>{label}</button>)}</div><label className="visually-hidden" htmlFor="agenda-date">Ir para uma data</label><input id="agenda-date" type="date" className="form-control calendar-date-input" value={filter || anchor} onChange={(e)=>jumpToDate(e.target.value)} /></div></div>
+      <div className="calendar-toolbar"><div className="calendar-navigation"><button className="calendar-arrow" aria-label="Período anterior" onClick={() => shiftPeriod(-1)}>‹</button><button className="calendar-arrow" aria-label="Próximo período" onClick={() => shiftPeriod(1)}>›</button><button className="btn btn-outline-dark calendar-today" onClick={() => { setAnchor(todayISO()); setFilter(''); }}>Hoje</button><h3>{periodTitle}</h3></div><div className="calendar-controls"><div className="calendar-modes" role="tablist" aria-label="Visualização da agenda">{[['week','Semana'],['month','Mês'],['list','Lista']].map(([value,label])=><button key={value} role="tab" aria-selected={mode===value} className={mode===value?'active':''} onClick={()=>setMode(value)}>{label}</button>)}</div><label className="visually-hidden" htmlFor="agenda-date">Ir para uma data</label><input id="agenda-date" type="date" className="form-control calendar-date-input" value={filter || anchor} onChange={(e)=>jumpToDate(e.target.value)} /></div></div>
       {mode === 'week' && <WeekCalendar days={days} events={events} onEvent={openEvent} />}
       {mode === 'day' && <WeekCalendar days={days} events={events} onEvent={openEvent} single />}
       {mode === 'month' && <MonthCalendar date={selectedDate} events={events} onSelect={(day)=>{setAnchor(dateToISO(day));setFilter(dateToISO(day));setMode('day');}} onEvent={openEvent} />}

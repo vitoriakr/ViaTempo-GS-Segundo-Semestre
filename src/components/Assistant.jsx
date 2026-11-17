@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { buildRecommendation, formatDate, formatTime } from '../utils/schedule';
 
-const prompts = ['Como está meu dia?', 'Tenho algum conflito?', 'Como me preparo?'];
+const prompts = ['Resuma meu dia', 'E amanhã?', 'O que vem agora?', 'Como chego a tempo?'];
 
 function makeSummary({ todayEvents, nextEvent, conflicts, recommendations }) {
   const collisions = [...conflicts.values()].flat();
@@ -29,6 +29,11 @@ function answer(question, context) {
     const events = context.events.filter((event) => event.date === iso);
     return events.length ? `Amanhã você tem ${events.map((event) => `${event.title}, às ${event.time}`).join('; ')}.` : 'Amanhã sua agenda está livre.';
   }
+  if (/semana|próxim|proxim/.test(text)) {
+    const next = context.events.filter((event) => new Date(`${event.date}T${event.time}`) >= new Date()).slice(0, 3);
+    return next.length ? `Os próximos compromissos são: ${next.map((event) => `${event.title}, ${formatDate(event.date, { weekday: 'short', day: 'numeric', month: 'short' })} às ${event.time}`).join('; ')}.` : 'Não encontrei próximos compromissos na agenda.';
+  }
+  if (/tempo|quanto|desloc|trajeto/.test(text) && context.nextEvent) return `Para ${context.nextEvent.title}, você reservou ${context.nextEvent.travelMinutes} min de deslocamento e ${context.nextEvent.bufferMinutes} min de margem. A saída planejada é ${formatTime(buildRecommendation(context.nextEvent).recommendedDeparture)}.`;
   if (/organ|hoje|rotina|agenda|prepar|acord|sair|hor.rio|planej|otimiz|melhor/.test(text)) return makeSummary(context);
   return 'Posso resumir seu dia, conferir conflitos ou ajudar com a preparação para o próximo compromisso.';
 }
@@ -62,7 +67,7 @@ export default function AssistantWidget({ todayEvents, events, nextEvent, confli
         <div className="assistant-overview"><span className="eyebrow">UM OLHAR NA SUA ROTINA</span><p>{makeSummary(context)}</p></div>
         {recommendations.length > 0 && <section className="assistant-widget-recs" aria-label="Sugestões para sua agenda"><h3>Sugestões para hoje</h3>{recommendations.slice(0, 3).map(({ event, plan, type }) => <article className="assistant-recommendation" key={event.id}><p><strong>{event.title}</strong>{type === 'delay' ? ` · saída ${formatTime(plan.departure)} → ${formatTime(plan.recommendedDeparture)}` : type === 'margin' ? ' · adicionar 5 min de margem' : ' · confira esta recomendação'}</p>{type === 'delay' && <button className="btn btn-sm btn-dark" onClick={() => onFeedback(event, 'accepted')}>Mudar horário</button>}{type === 'margin' && <button className="btn btn-sm btn-dark" onClick={() => onFeedback(event, 'margin')}>Adicionar 5 min</button>}</article>)}</section>}
         <div className="assistant-messages" aria-live="polite" aria-label="Conversa com o assistente">{messages.map((message, index) => <p className={`assistant-message ${message.role}`} key={index}>{message.text}</p>)}<div ref={bottomRef} /></div>
-        {!messages.length && <div className="assistant-prompts">{prompts.map((prompt) => <button className="btn btn-sm btn-outline-secondary" key={prompt} onClick={() => ask(prompt)}>{prompt}</button>)}</div>}
+        <div className="assistant-prompts">{prompts.map((prompt) => <button className="btn btn-sm btn-outline-secondary" key={prompt} onClick={() => ask(prompt)}>{prompt}</button>)}</div>
         <form className="assistant-form" onSubmit={(event) => { event.preventDefault(); ask(); }}><input className="form-control" value={question} onChange={(event) => setQuestion(event.target.value)} placeholder="Pergunte sobre sua rotina" aria-label="Pergunte sobre sua rotina" /><button className="btn btn-dark" type="submit">Enviar</button></form>
       </div>
     </section>}
