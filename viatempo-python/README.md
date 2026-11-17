@@ -1,6 +1,6 @@
 # ViaTempo – Seu caminho, no tempo certo
 
-Solução em Python desenvolvida para a **Global Solution CitizenTech** da FIAP, na disciplina **Computational Thinking with Python** (Engenharia de Software, Porto Alegre, 2026).
+Solução em Python desenvolvida para a **Global Solution CitizenTech** da FIAP, na disciplina **Computational Thinking with Python**, do curso de Engenharia de Software, em Porto Alegre (2026).
 
 **Equipe DEV.AK**
 
@@ -12,124 +12,346 @@ Solução em Python desenvolvida para a **Global Solution CitizenTech** da FIAP,
 
 ---
 
-## Qual problema da cidade foi escolhido?
+## 1. Sobre o projeto
 
-A **imprevisibilidade dos deslocamentos urbanos**. O tempo para fazer o mesmo caminho muda muito ao longo do dia: é baixo bem cedo, quase dobra no horário de pico e ainda aumenta com chuva, obras e acidentes. Os aplicativos de mapa mostram o trânsito, mas a pessoa ainda precisa calcular sozinha a que horas deve se arrumar e sair, e muitas vezes percebe tarde demais que vai se atrasar.
+O ViaTempo é uma solução que utiliza dados e modelos matemáticos para ajudar as pessoas a organizarem seus deslocamentos urbanos.
 
-A pergunta que guiou o projeto foi: **como os dados de trajeto podem ajudar a entender esse problema e decidir o melhor horário para sair de casa?**
+O projeto surgiu a partir da **imprevisibilidade do trânsito nas cidades**. O tempo necessário para percorrer o mesmo caminho pode variar conforme o horário, a chuva, os acidentes e as obras. Isso dificulta a organização da rotina e aumenta as chances de atrasos.
 
-## O que a solução proposta faz?
+A proposta é utilizar informações sobre os trajetos para estimar o tempo de deslocamento, calcular o melhor horário para sair e ajudar o usuário a se preparar com antecedência.
 
-O ViaTempo é um programa de terminal que:
+Nesta parte do projeto, desenvolvida em Python, os dados são armazenados, processados e analisados para gerar recomendações e apoiar decisões.
 
-1. **Guarda os dados do usuário**: compromissos, locais frequentes, tempo de preparação e margem de segurança (arquivos JSON).
-2. **Usa o histórico de viagens** (arquivo CSV com 1.360 trajetos) para estimar quanto tempo o caminho leva em cada horário.
-3. **Calcula o plano do dia**: o horário mais tarde para sair que ainda chega a tempo e o horário para começar a se preparar.
-4. **Avisa o nível de urgência** (verde, amarelo ou vermelho) olhando a velocidade com que o trânsito está piorando naquele horário.
-5. **Simula mudanças no trânsito** (acidente, chuva ou obra). Se a mudança passar do limite do usuário, recalcula e mostra uma recomendação explicando a causa, o impacto e o novo horário. O usuário decide se aceita, rejeita ou ajusta.
-6. **Detecta conflitos** entre compromissos do mesmo dia.
-7. **Gera um relatório de dados** com os melhores e piores horários, o impacto da chuva e dos acidentes e a pontualidade de quem segue ou não as recomendações.
-8. **Exporta o plano para o front-end** em `data/meu_dia.json`, que é lido pela tela "Meu Dia" da plataforma.
+## 2. O que o Python faz no ViaTempo?
 
-### Como os dados viram decisão
+O Python é responsável pela lógica de processamento dos dados e pelos cálculos do ViaTempo.
 
-Com os dados do repositório, o relatório (opção 8, destino FIAP) mostra que:
+Entre suas principais funcionalidades estão:
 
-- saindo às **08:00** o trajeto leva em média **54,4 min**; saindo às **06:15**, leva **24,5 min**. São cerca de **30 min por dia**, ou **11 horas por mês**;
-- a **chuva** soma em média **+9,8 min** e um **acidente** soma **+16,8 min** em relação ao mesmo horário em dias normais;
-- quem **seguiu** a recomendação chegou no horário em **89,7%** das vezes, contra **45,5%** de quem **não seguiu**.
+1. **Gerenciamento de dados:** armazena compromissos, locais frequentes e preferências do usuário em arquivos JSON.
+2. **Análise do histórico de viagens:** utiliza os registros de deslocamentos para calcular médias de tempo por destino e horário.
+3. **Estimativa de trajetos:** utiliza o histórico, a interpolação linear e o modelo matemático para estimar a duração dos deslocamentos.
+4. **Planejamento da rotina:** calcula o horário mais tarde possível para sair de casa e o horário necessário para começar a se preparar.
+5. **Nível de urgência:** identifica se o trânsito está tranquilo ou piorando, classificando a situação em verde, amarelo ou vermelho.
+6. **Monitoramento:** simula acidentes, chuvas e obras, verificando se as mudanças justificam uma nova recomendação.
+7. **Registro de decisões e feedbacks:** permite registrar se o usuário aceitou, rejeitou ou ajustou uma recomendação e como foi seu deslocamento.
+8. **Identificação de conflitos:** verifica se dois compromissos do mesmo dia possuem horários incompatíveis.
+9. **Relatórios e gráficos:** analisa os dados de viagens e feedbacks, apresentando informações que ajudam a compreender os impactos do trânsito.
 
-Por isso, o ViaTempo recomenda horários fora do pico e aumenta a folga em dias de chuva ou com acidentes.
+## 3. Como os dados são processados?
 
----
+O funcionamento do Python pode ser dividido em algumas etapas:
 
-## Quickstart
+1. **Entrada:** o programa carrega os dados do usuário, compromissos, locais e histórico de viagens.
+2. **Tratamento:** converte horários, organiza os registros e calcula as médias de deslocamento.
+3. **Estimativa:** utiliza os dados históricos e o modelo matemático para estimar o tempo de trajeto.
+4. **Planejamento:** calcula os horários recomendados de saída e preparação.
+5. **Monitoramento:** simula mudanças nas condições do trânsito e verifica a necessidade de atualizar a recomendação.
+6. **Saída:** apresenta os resultados no terminal, registra informações em arquivos e gera dados para o front-end.
 
-Pré-requisito: **Python 3.10 ou superior**.
+## 4. Modelagem matemática
+
+O ViaTempo utiliza os modelos matemáticos desenvolvidos na disciplina de Differentiated Problem Solving. Eles ajudam a representar o comportamento do tempo de deslocamento ao longo do dia.
+
+### 4.1. Modelo de tempo de trajeto
+
+O modelo considera dois períodos de maior movimento: manhã e tarde.
+
+A função implementada em `src/modelo.py` é:
+
+\[
+T(t)=T_b+1{,}2T_b e^{-2(t-8)^2}+T_b e^{-2(t-18)^2}
+\]
+
+Onde:
+
+- \(T(t)\): tempo estimado do trajeto, em minutos.
+- \(T_b\): tempo-base do deslocamento, sem trânsito.
+- \(t\): horário de saída, representado em horas.
+
+A função representa o aumento do tempo de deslocamento nos horários de pico, com maior intensidade pela manhã e outro aumento no período da tarde.
+
+### 4.2. Modelo de atraso por acidente
+
+Para representar o aumento do atraso depois de um acidente, é utilizada a função:
+
+\[
+D(t)=20(1-e^{-t/15})
+\]
+
+Onde:
+
+- \(D(t)\): atraso acumulado, em minutos.
+- \(t\): tempo decorrido desde o acidente, em minutos.
+- 20: atraso máximo previsto pelo modelo.
+- 15: constante que controla a velocidade de crescimento do atraso.
+
+O modelo representa um atraso que aumenta com o passar do tempo e se aproxima de 20 minutos.
+
+### 4.3. Interpolação linear
+
+Quando existem registros históricos próximos ao horário desejado, mas não exatamente naquele minuto, o sistema utiliza a interpolação linear para estimar o tempo de trajeto.
+
+A estimativa é feita a partir dos dois horários registrados mais próximos. Quando não existem dados próximos o suficiente, o sistema utiliza o modelo matemático como alternativa.
+
+### 4.4. Cálculo do horário de saída
+
+O programa procura, minuto a minuto, o horário mais tarde em que o usuário ainda consegue chegar ao compromisso respeitando a margem de segurança.
+
+A condição utilizada é:
+
+\[
+S+T(S)+M\leq C
+\]
+
+Onde:
+
+- \(S\): horário de saída.
+- \(T(S)\): tempo estimado do trajeto.
+- \(M\): margem de segurança.
+- \(C\): horário do compromisso.
+
+O horário de preparação é calculado subtraindo o tempo necessário para se arrumar do horário recomendado de saída.
+
+## 5. Regras e funcionalidades implementadas
+
+| Regra | Implementação |
+|---|---|
+| RN01 – Horário de saída | Calcula a saída mais tarde possível sem comprometer a chegada. |
+| RN02 – Horário de preparação | Calcula quando o usuário deve começar a se arrumar. |
+| RN03 – Variação do trânsito | Só apresenta um aviso quando a mudança ultrapassa o limite configurado. |
+| RN04 – Decisão do usuário | Não altera a recomendação sem a decisão do usuário. |
+| RN05 – Compromisso sem destino | Calcula o horário de preparação sem estimar deslocamento. |
+| RN07 – Conflitos | Identifica compromissos com horários incompatíveis, sem alterá-los automaticamente. |
+| RNF09 – Explicação da recomendação | Apresenta a causa, o impacto e o horário sugerido. |
+
+Além dessas regras, o programa utiliza médias históricas, interpolação linear e o modelo matemático para estimar os trajetos.
+
+## 6. Simulação e geração de dados
+
+Como o projeto não utiliza uma API de trânsito em tempo real, foram criados dados simulados para permitir os testes e as análises.
+
+O arquivo `gerar_dados.py` é responsável por gerar:
+
+- **1.360 registros de viagens:** distribuídos em 20 dias úteis, com saídas a cada 15 minutos, para dois destinos.
+- **100 registros de feedback:** simulam situações em que os usuários seguem ou não os horários recomendados.
+
+A geração considera:
+
+- Horários de saída entre 5h30 e 10h e entre 16h e 19h30.
+- Variações aleatórias nos tempos de deslocamento.
+- Probabilidade de 15% de chuva por dia.
+- Probabilidade de 5% de acidente por viagem, em dias sem chuva.
+- Probabilidade de 60% de o usuário seguir a recomendação nos dados de feedback.
+
+Foi utilizada uma semente aleatória fixa (`random.seed(42)`), permitindo gerar os mesmos dados novamente e manter os testes reproduzíveis.
+
+**Importante:** os registros são simulados, não representam medições reais do trânsito. Eles foram criados para testar o funcionamento do sistema e demonstrar como os dados podem ser transformados em informações para apoiar decisões.
+
+Ao executar novamente `gerar_dados.py`, os arquivos `trajetos_historicos.csv` e `feedback.csv` são sobrescritos com novos dados gerados a partir da mesma configuração.
+
+## 7. Relatórios e visualização dos dados
+
+O ViaTempo possui uma funcionalidade de análise que permite selecionar um destino e visualizar informações sobre os deslocamentos.
+
+O relatório apresenta:
+
+- Tempo médio de trajeto por horário em dias normais.
+- Melhor e pior horário para sair pela manhã.
+- Diferença estimada de tempo entre os horários.
+- Impacto médio da chuva e dos acidentes.
+- Comparação da pontualidade entre quem seguiu e quem não seguiu as recomendações.
+- Quantidade de recomendações aceitas, quando existem registros.
+
+Também é gerado um gráfico com o **Matplotlib**, comparando os tempos médios de deslocamento em dias normais e chuvosos.
+
+Os resultados são salvos na pasta `saida/`:
+
+- `relatorio_fiap.txt`: relatório em texto.
+- `grafico_fiap.png`: gráfico de análise do destino FIAP.
+
+O gráfico é salvo como imagem PNG e pode ser aberto separadamente.
+
+## 8. Integração com o front-end
+
+A comunicação entre o Python e o front-end é realizada por meio de um arquivo JSON, sem a utilização de Flask ou de uma API.
+
+Quando o usuário consulta o planejamento do dia, o Python gera o arquivo:
+
+`saida/meu_dia.json`
+
+Esse arquivo contém informações como:
+
+- Nome do usuário.
+- Data selecionada.
+- Lista de compromissos.
+- Horários de saída e preparação.
+- Tempo estimado de trajeto.
+- Nível de urgência.
+- Mensagens e alertas.
+
+O front-end utiliza essas informações para apresentar o planejamento na tela **Meu Dia**.
+
+Dessa forma, o Python fica responsável pelos cálculos e pelo processamento dos dados, enquanto o front-end apresenta os resultados ao usuário.
+
+## 9. Tecnologias e bibliotecas
+
+| Tecnologia | Utilização |
+|---|---|
+| Python | Desenvolvimento da lógica e processamento dos dados. |
+| Matplotlib | Criação dos gráficos do relatório. |
+| CSV | Armazenamento dos históricos de viagens e feedbacks. |
+| JSON | Armazenamento dos dados do usuário, compromissos, locais e resultados. |
+| Pytest | Execução dos testes automatizados. |
+
+As bibliotecas `csv`, `json`, `math`, `datetime` e `pathlib` fazem parte da biblioteca padrão do Python.
+
+## 10. Estrutura do projeto
+
+```text
+viatempo-python/
+│
+├── main.py
+├── gerar_dados.py
+├── requirements.txt
+├── README.md
+│
+├── src/
+│   ├── __init__.py
+│   ├── armazenamento.py
+│   ├── entrada.py
+│   ├── horarios.py
+│   ├── modelo.py
+│   ├── trajetos.py
+│   ├── rotina.py
+│   ├── monitoramento.py
+│   └── analise.py
+│
+├── data/
+│   ├── usuario.json
+│   ├── locais.json
+│   ├── compromissos.json
+│   ├── trajetos_historicos.csv
+│   ├── feedback.csv
+│   └── historico_recomendacoes.json
+│
+├── saida/
+│   ├── meu_dia.json
+│   ├── relatorio_fiap.txt
+│   └── grafico_fiap.png
+│
+└── tests/
+    └── test_viatempo.py
+```
+
+### Responsabilidade dos arquivos
+
+| Arquivo | Responsabilidade |
+|---|---|
+| `main.py` | Menu principal e interação com o usuário. |
+| `gerar_dados.py` | Geração dos dados simulados. |
+| `armazenamento.py` | Leitura e gravação de arquivos JSON e CSV. |
+| `entrada.py` | Validação das informações digitadas pelo usuário. |
+| `horarios.py` | Conversão e validação de horários. |
+| `modelo.py` | Implementação dos modelos matemáticos. |
+| `trajetos.py` | Leitura do histórico, cálculo de médias e estimativa de trajetos. |
+| `rotina.py` | Planejamento dos horários e identificação de conflitos. |
+| `monitoramento.py` | Simulação de eventos e recálculo das recomendações. |
+| `analise.py` | Análise dos dados, geração de relatórios e gráficos. |
+| `test_viatempo.py` | Testes automatizados das funcionalidades. |
+
+## 11. Como executar o projeto
+
+### Pré-requisitos
+
+- Python 3.10 ou superior.
+- Pip para instalação das dependências.
+
+### Instalação
+
+**1. Clone o repositório:**
 
 ```bash
-# 1. Clonar o repositório
-git clone <link-do-repositorio>
+git clone https://github.com/vitoriakr/viatempo
+```
+
+**2. Entre na pasta do projeto:**
+
+```bash
 cd viatempo-python
+```
 
-# 2. (Opcional) criar um ambiente virtual
+**3. Crie um ambiente virtual (opcional, mas recomendado):**
+
+```bash
 python -m venv .venv
-# Windows: .venv\Scripts\activate    |    Linux/Mac: source .venv/bin/activate
+```
 
-# 3. Instalar as dependências (usadas só para o gráfico do relatório)
+No Windows:
+
+```bash
+.venv\Scripts\activate
+```
+
+No Linux ou macOS:
+
+```bash
+source .venv/bin/activate
+```
+
+**4. Instale as dependências:**
+
+```bash
 pip install -r requirements.txt
+```
 
-# 4. Executar
+**5. Execute o programa:**
+
+```bash
 python main.py
 ```
 
-Os dados já vêm prontos na pasta `data/`. Para gerar o histórico simulado de novo, execute `python scripts/gerar_dados.py`.
+Os dados de exemplo já estão disponíveis na pasta `data/`. Não é necessário gerar os dados novamente para executar o programa.
 
-### Roteiro rápido para testar
+### Gerar os dados simulados novamente
 
-1. Opção **1 (Meu dia)** e Enter: mostra o plano de 19/11/2026 da usuária Marina.
-2. Opção **6 (Simular mudança)** → Enter → ID **1** → **1 (Acidente)** → **6** minutos: o sistema avisa e sugere sair mais cedo.
-3. Opção **6** de novo com **2** minutos de acidente: a mudança é pequena e nenhum aviso é enviado.
-4. Opção **1** com a data **2026-11-20**: aparece um alerta de conflito entre dois compromissos.
-5. Opção **8 (Relatório)** → **FIAP**: mostra a análise dos dados e salva um gráfico em `data/`.
+Caso queira recriar o histórico de viagens e os feedbacks:
 
----
-
-## Estrutura do repositório
-
-```
-viatempo-python/
-├── main.py                   # menu principal e interação com o usuário
-├── requirements.txt
-├── README.md
-├── src/
-│   ├── armazenamento.py      # leitura e gravação de JSON e CSV
-│   ├── horarios.py           # conversão e validação de horários
-│   ├── modelo.py             # modelos matemáticos (mesmos do relatório de Matemática)
-│   ├── trajetos.py           # estimativa do trajeto a partir do histórico
-│   ├── rotina.py             # cálculo do plano do dia e conflitos
-│   ├── monitoramento.py      # simulação de eventos e recálculo
-│   └── analise.py            # relatório de dados
-├── scripts/
-│   └── gerar_dados.py        # gera os dados simulados
-└── data/
-    ├── usuario.json              # perfil e preferências
-    ├── locais.json               # locais frequentes
-    ├── compromissos.json         # agenda
-    ├── trajetos_historicos.csv   # histórico de viagens (simulado)
-    ├── feedback.csv              # respostas dos usuários (simulado)
-    ├── plano.json                # gerado: plano lido pelo front-end
-    └── grafico_fiap.png          # gerado: gráfico do relatório
+```bash
+python gerar_dados.py
 ```
 
-## Dados utilizados
+**Atenção:** esse comando sobrescreve os arquivos `trajetos_historicos.csv` e `feedback.csv`.
 
-| Arquivo | Conteúdo | Colunas / campos |
-|---|---|---|
-| `trajetos_historicos.csv` | 1.360 viagens em 20 dias úteis, a cada 15 min (5h30–10h e 16h–19h30), para 2 destinos | data, dia_semana, destino, horario_saida, condicao (normal, chuva, acidente), tempo_min |
-| `feedback.csv` | 40 respostas após compromissos | data, compromisso, seguiu_recomendacao, chegou_no_horario, atraso_min |
-| `usuario.json` | preferências | nome, preparacao_padrao, margem_padrao, limite_variacao |
-| `locais.json` | destinos frequentes | nome, tempo_base (trajeto sem trânsito) |
-| `compromissos.json` | agenda | id, titulo, data, horario, destino, duracao_min, preparacao, margem |
+## 12. Testes automatizados
 
-> **Importante:** o histórico e o feedback são **dados simulados**, criados por `scripts/gerar_dados.py` com base no modelo matemático do projeto, com variações aleatórias, dias de chuva (15%) e acidentes (5% das viagens). A semente aleatória é fixa, então os dados são sempre os mesmos. Numa versão real, eles viriam de uma API de mapas e dos próprios usuários.
+O projeto utiliza Pytest para verificar o funcionamento das principais funções.
 
-## Lógica e regras implementadas
+Para executar os testes, utilize:
 
-| Regra do projeto | Onde está | Como funciona |
-|---|---|---|
-| RN01 – saída = compromisso − trajeto − margem | `rotina.calcular_saida` | testa minuto a minuto, de trás para frente, até achar a saída mais tarde que ainda chega a tempo |
-| RN02 – preparação = saída − tempo de preparação | `rotina.calcular_plano` | subtrai o tempo de preparação do horário de saída |
-| RN03 – só avisar se a variação passar do limite | `monitoramento.recalcular` | compara o atraso detectado com o limite do usuário (padrão de 5 min) |
-| RN04 – nada muda sem o usuário aceitar | `main.simular_mudanca` | o usuário escolhe aceitar, rejeitar ou ajustar, e a decisão é registrada |
-| RN05 – compromisso sem destino não calcula trajeto | `rotina.calcular_plano` | calcula só o horário de preparação |
-| RN07 – conflito gera alerta, não alteração | `rotina.verificar_conflitos` | avisa se um compromisso começa antes do anterior terminar |
-| RNF09 – recomendação explicável | `monitoramento.recalcular` | toda recomendação traz causa, impacto e novo horário |
-| Estimativa por dados | `trajetos.estimar_trajeto` | usa a média do histórico; entre dois horários faz interpolação linear; sem dados, usa o modelo matemático |
-| Nível de urgência | `rotina.nivel_urgencia` | calcula a taxa de variação do trajeto nos próximos 5 min (ideia de derivada) |
+```bash
+python -m pytest -q
+```
 
-## Integração com as outras disciplinas
+Os testes verificam, entre outros pontos:
 
-- **Matemática**: as funções de `src/modelo.py` são as mesmas do relatório de Differentiated Problem Solving.
-- **Front-end / Web Development**: a tela "Meu Dia" lê o arquivo `data/plano.json` gerado por este programa.
-- **Software & Total Experience Design**: as regras RN01 a RN07 e a persona Marina vêm do documento de escopo do produto.
+- Conversão e validação de horários.
+- Cálculo das médias de deslocamento.
+- Interpolação linear.
+- Utilização do modelo matemático quando não há histórico.
+- Cálculo do horário de saída.
+- Tratamento de margem e preparação iguais a zero.
+- Compromissos sem destino.
+- Identificação de conflitos.
+- Níveis de urgência.
+- Recálculo de recomendações diante de mudanças no trânsito.
+
+## 13. Considerações finais
+
+A parte desenvolvida em Python demonstra como dados podem ser utilizados para compreender um problema urbano e apoiar decisões do cotidiano.
+
+Com o histórico de viagens, os modelos matemáticos e as simulações de mudanças no trânsito, o ViaTempo consegue estimar deslocamentos, sugerir horários e apresentar informações que ajudam o usuário a organizar melhor sua rotina.
+
+O projeto também permite integrar o processamento de dados com a interface desenvolvida pela equipe, conectando a análise em Python à experiência apresentada ao usuário.
+
+**ViaTempo – Seu caminho, no tempo certo.**
