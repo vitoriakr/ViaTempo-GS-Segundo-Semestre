@@ -25,7 +25,7 @@ O primeiro acesso começa sem compromissos: a pessoa escolhe cadastrar a rotina,
 - Calcular preparação e saída: `saída = compromisso - deslocamento - margem`; `preparação = saída - tempo de preparação`.
 - Simular atraso de trajeto, mostrar causa e impacto, e permitir aceitar ou rejeitar a sugestão.
 - Registrar retorno pós-compromisso sobre pontualidade.
-- Consultar um assistente demonstrativo que responde com base na agenda local e nos conflitos detectados.
+- Consultar a Teca, mascote tartaruga do assistente, que personaliza recomendações e evolui visualmente com o XP da Jornada.
 - Importar `.ics` do Google Calendar, Apple Calendar ou Microsoft Outlook e JSON ViaTempo/Python; exportar calendário `.ics` e dados no modelo Python.
 - Salvar no navegador sem conta, com aviso claro; habilitar persistência REST externa via variável de ambiente.
 - Interface responsiva, campos identificados, foco de teclado visível, feedback de carregamento/erro/sucesso, estados vazios e confirmações.
@@ -99,7 +99,7 @@ O importador e exportador aceitam o modelo usado pela análise Python: `usuario`
 ## Estrutura
 
 - `src/components/` — navegação, páginas, modais, cards, importação/exportação.
-- `src/components/Assistant.jsx` — respostas simuladas calculadas no navegador, sem serviço de IA.
+- `src/components/Assistant.jsx` e `src/components/Teca.jsx` — assistente local e identidade visual reutilizável da mascote.
 - `src/services/api.js` — persistência local e operações REST.
 - `src/utils/schedule.js` — cálculo da rotina e recomendações.
 - `src/utils/calendar.js` — importação e exportação ICS/JSON.
