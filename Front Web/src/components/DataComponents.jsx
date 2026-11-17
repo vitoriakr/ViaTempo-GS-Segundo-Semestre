@@ -70,13 +70,15 @@ export function AccountModal({ usuario, preferences, onClose, onSave, onDeleteDa
   const [threshold, setThreshold] = useState(preferences.alertThreshold ?? 5);
   const [prep, setPrep] = useState(preferences.defaultPrepMinutes ?? 30);
   const [buffer, setBuffer] = useState(preferences.defaultBufferMinutes ?? 15);
-  const save = () => onSave({ usuario: name.trim(), preferences: { ...preferences, alertThreshold: Number(threshold), defaultPrepMinutes: Number(prep), defaultBufferMinutes: Number(buffer) } });
+  const [darkMode, setDarkMode] = useState(Boolean(preferences.darkMode));
+  const save = () => onSave({ usuario: name.trim(), preferences: { ...preferences, alertThreshold: Number(threshold), defaultPrepMinutes: Number(prep), defaultBufferMinutes: Number(buffer), darkMode } });
 
   return <Modal title="Minha conta" onClose={onClose} footer={<><button className="btn btn-light" onClick={onClose}>Cancelar</button><button className="btn btn-dark" onClick={save}>Salvar alterações</button></>}>
     <div className="preference-fields"><div><label className="form-label" htmlFor="account-name">Como quer ser chamado?</label><input id="account-name" className="form-control" maxLength="60" value={name} onChange={(e)=>setName(e.target.value)} placeholder="Seu nome" /></div>
     <div className="account-summary"><span><strong>{eventCount}</strong> compromissos</span><span><strong>{locationCount}</strong> locais salvos</span><button className="btn btn-sm btn-outline-dark" onClick={onExport}>Baixar backup</button></div>
     <p className="muted-copy">Padrões da sua rotina</p>
     {[["default-prep", "Preparação padrão", prep, setPrep], ["default-buffer", "Margem padrão", buffer, setBuffer], ["threshold", "Aviso de atraso", threshold, setThreshold]].map(([id, label, value, setter]) => <div key={id}><label className="form-label" htmlFor={id}>{label} (min)</label><input id={id} className="form-control" type="number" min="0" value={value} onChange={(event) => setter(event.target.value)} /></div>)}</div>
+    <label className="dark-mode-setting"><span><strong>Modo noturno</strong><small>Usar cores escuras no ViaTempo</small></span><input type="checkbox" checked={darkMode} onChange={(event)=>setDarkMode(event.target.checked)} /><i aria-hidden="true" /></label>
     <p className="form-hint">Os dados ficam neste navegador. Esta versão não usa login.</p><button className="btn account-delete-button mt-3" onClick={onDeleteData}><span aria-hidden="true">⌫</span> Apagar meus dados</button>
   </Modal>;
 }
