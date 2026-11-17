@@ -30,7 +30,7 @@ export function Sidebar({ active, onNavigate, open, onClose }) {
     {open && <button className="sidebar-scrim d-lg-none" aria-label="Fechar menu" onClick={onClose} />}
     <aside className={`app-sidebar ${open ? 'is-open' : ''}`}>
       <div className="sidebar-head"><Brand /><button className="btn-close d-lg-none" aria-label="Fechar menu" onClick={onClose} /></div>
-      <nav aria-label="Navegação principal">{links.map(({ id, label, icon }) => <button key={id} className={`side-link ${active === id ? 'active' : ''}`} aria-current={active === id ? 'page' : undefined} onClick={() => onNavigate(id)}><Icon name={icon} />{label}</button>)}</nav>
+      <nav aria-label="Navegação principal">{links.map(({ id, label, icon }) => <button key={id} className={`side-link ${active === id ? 'active' : ''}`} aria-label={label} title={label} aria-current={active === id ? 'page' : undefined} onClick={() => onNavigate(id)}><Icon name={icon} /><span className="side-label">{label}</span></button>)}</nav>
     </aside>
   </>;
 }

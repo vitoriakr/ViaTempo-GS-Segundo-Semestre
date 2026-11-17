@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { buildRecommendation, formatDate, formatTime } from '../utils/schedule';
 
-const prompts = ['Resuma meu dia', 'E amanhã?', 'O que vem agora?', 'Como chego a tempo?'];
+const prompts = ['Planejar meu dia', 'E amanhã?', 'O que vem agora?', 'Como ganho XP?'];
 
 function makeSummary({ todayEvents, nextEvent, conflicts, recommendations }) {
   const collisions = [...conflicts.values()].flat();
@@ -29,6 +29,10 @@ function answer(question, context) {
     const events = context.events.filter((event) => event.date === iso);
     return events.length ? `Amanhã você tem ${events.map((event) => `${event.title}, às ${event.time}`).join('; ')}.` : 'Amanhã sua agenda está livre.';
   }
+  if (/xp|nível|nivel|conquist|ganho/.test(text)) {
+    const xp = context.events.filter((event) => event.userFeedback).reduce((sum, event) => sum + (event.userFeedback === 'on-time' ? 30 : 10), 0);
+    return `Você já juntou ${xp} XP. Registre como foi a chegada depois de cada compromisso: pontual vale 30 XP, com atraso vale 10 XP. Planejamento constante é o que faz a Teca avançar pelas ilhas!`;
+  }
   if (/semana|próxim|proxim/.test(text)) {
     const next = context.events.filter((event) => new Date(`${event.date}T${event.time}`) >= new Date()).slice(0, 3);
     return next.length ? `Os próximos compromissos são: ${next.map((event) => `${event.title}, ${formatDate(event.date, { weekday: 'short', day: 'numeric', month: 'short' })} às ${event.time}`).join('; ')}.` : 'Não encontrei próximos compromissos na agenda.';
@@ -38,14 +42,17 @@ function answer(question, context) {
   return 'Posso resumir seu dia, conferir conflitos ou ajudar com a preparação para o próximo compromisso.';
 }
 
-function BotFace() {
-  return <svg className="bot-face" viewBox="0 0 64 64" aria-hidden="true"><path d="M32 7v7"/><circle cx="32" cy="5" r="3"/><rect x="9" y="15" width="46" height="39" rx="16"/><path d="M20 57h24"/><circle className="bot-eye" cx="23" cy="33" r="3"/><circle className="bot-eye" cx="41" cy="33" r="3"/><path d="M25 42q7 7 14 0"/><circle className="bot-cheek" cx="16" cy="39" r="2"/><circle className="bot-cheek" cx="48" cy="39" r="2"/></svg>;
+function TurtleFace({ skin = 'shell-starter' }) {
+  return <svg className={`turtle-face ${skin}`} viewBox="0 0 64 64" aria-hidden="true"><path className="turtle-body" d="M25 14c-4-3-8-1-9 3l-3 5c-4 2-5 7-2 10l-2 6c-1 4 2 7 6 6l7-4h20l7 4c4 1 7-2 6-6l-2-6c3-3 2-8-2-10l-3-5c-1-4-5-6-9-3"/><ellipse className="turtle-shell" cx="32" cy="34" rx="17" ry="14"/><path className="shell-mark" d="M32 20v28M16 31h32M21 24l11 7 11-7M21 42l11-7 11 7"/><circle className="turtle-head" cx="32" cy="13" r="9"/><circle className="turtle-eye" cx="28.5" cy="12" r="1.4"/><circle className="turtle-eye" cx="35.5" cy="12" r="1.4"/><path className="turtle-smile" d="M29 16q3 3 6 0"/><circle className="turtle-cheek" cx="25" cy="15" r="1.5"/><circle className="turtle-cheek" cx="39" cy="15" r="1.5"/></svg>;
 }
 
 export default function AssistantWidget({ todayEvents, events, nextEvent, conflicts, recommendations, onFeedback }) {
   const [open, setOpen] = useState(false);
   const [question, setQuestion] = useState('');
   const [messages, setMessages] = useState([]);
+  const xp = events.filter((event) => event.userFeedback).reduce((sum, event) => sum + (event.userFeedback === 'on-time' ? 30 : 10), 0);
+  const level = Math.floor(xp / 100) + 1;
+  const shell = level >= 6 ? 'shell-gold' : level >= 4 ? 'shell-purple' : level >= 2 ? 'shell-teal' : 'shell-starter';
   const bottomRef = useRef(null);
   const context = { todayEvents, events, nextEvent, conflicts, recommendations };
   useEffect(() => { if (open) bottomRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }, [messages, open]);
@@ -62,15 +69,15 @@ export default function AssistantWidget({ todayEvents, events, nextEvent, confli
   }
   return <div className="assistant-widget">
     {open && <section id="assistant-panel" className="assistant-panel" role="dialog" aria-modal="false" aria-labelledby="assistant-title">
-      <header className="assistant-widget-header"><span className="assistant-avatar"><BotFace /></span><div><h2 id="assistant-title">Seu dia, em foco</h2><p>Assistente da ViaTempo</p></div><button className="assistant-close" onClick={() => setOpen(false)} aria-label="Fechar assistente">×</button></header>
+      <header className="assistant-widget-header"><span className={`assistant-avatar ${shell}`}><TurtleFace skin={shell} /></span><div><h2 id="assistant-title">Teca</h2><p>Sua tartaruga do tempo · nível {level}</p></div><span className="teca-xp">{xp} XP</span><button className="assistant-close" onClick={() => setOpen(false)} aria-label="Fechar assistente">×</button></header>
       <div className="assistant-widget-content">
-        <div className="assistant-overview"><span className="eyebrow">UM OLHAR NA SUA ROTINA</span><p>{makeSummary(context)}</p></div>
+        <div className="assistant-overview"><span className="eyebrow">PASSO A PASSO, NO TEMPO CERTO</span><p>{makeSummary(context)}</p><small className="teca-motto">— Teca, sua parceira de jornada</small></div>
         {recommendations.length > 0 && <section className="assistant-widget-recs" aria-label="Sugestões para sua agenda"><h3>Sugestões para hoje</h3>{recommendations.slice(0, 3).map(({ event, plan, type }) => <article className="assistant-recommendation" key={event.id}><p><strong>{event.title}</strong>{type === 'delay' ? ` · saída ${formatTime(plan.departure)} → ${formatTime(plan.recommendedDeparture)}` : type === 'margin' ? ' · adicionar 5 min de margem' : ' · confira esta recomendação'}</p>{type === 'delay' && <button className="btn btn-sm btn-dark" onClick={() => onFeedback(event, 'accepted')}>Mudar horário</button>}{type === 'margin' && <button className="btn btn-sm btn-dark" onClick={() => onFeedback(event, 'margin')}>Adicionar 5 min</button>}</article>)}</section>}
         <div className="assistant-messages" aria-live="polite" aria-label="Conversa com o assistente">{messages.map((message, index) => <p className={`assistant-message ${message.role}`} key={index}>{message.text}</p>)}<div ref={bottomRef} /></div>
         <div className="assistant-prompts">{prompts.map((prompt) => <button className="btn btn-sm btn-outline-secondary" key={prompt} onClick={() => ask(prompt)}>{prompt}</button>)}</div>
         <form className="assistant-form" onSubmit={(event) => { event.preventDefault(); ask(); }}><input className="form-control" value={question} onChange={(event) => setQuestion(event.target.value)} placeholder="Pergunte sobre sua rotina" aria-label="Pergunte sobre sua rotina" /><button className="btn btn-dark" type="submit">Enviar</button></form>
       </div>
     </section>}
-    <button className={`assistant-launcher${open ? ' is-open' : ''}`} onClick={() => setOpen((value) => !value)} aria-label={open ? 'Fechar assistente' : 'Conversar sobre minha rotina'} aria-expanded={open} aria-controls="assistant-panel"><BotFace />{!open && recommendations.length > 0 && <span className="assistant-badge">{recommendations.length}</span>}</button>
+    <button className={`assistant-launcher teca-launcher ${open ? ' is-open' : ''}`} onClick={() => setOpen((value) => !value)} aria-label={open ? 'Fechar conversa com Teca' : 'Conversar com Teca, sua tartaruga do tempo'} aria-expanded={open} aria-controls="assistant-panel"><TurtleFace skin={shell} />{!open && <span className="teca-name-tag">Teca</span>}{!open && recommendations.length > 0 && <span className="assistant-badge">{recommendations.length}</span>}</button>
   </div>;
 }
