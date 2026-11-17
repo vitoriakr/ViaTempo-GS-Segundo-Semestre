@@ -3,6 +3,7 @@ import { Brand } from './Primitives';
 import { makeId } from '../services/api';
 import { parseICS, normalizeImportedJSON } from '../utils/calendar';
 import { CalendarImportHelp } from './DataComponents';
+import { TecaAvatar } from './Teca';
 
 const emptyPreferences = { alertThreshold: 5, defaultPrepMinutes: 30, defaultBufferMinutes: 15, notifications: true };
 
@@ -76,7 +77,7 @@ export default function Onboarding({ onComplete }) {
   const back = () => { setStep('choose'); setPreview(null); setFileError(''); setManualError(''); };
 
   return <main className="onboarding-shell">
-    <header className={`onboarding-nav ${step === 'choose' ? 'centered' : ''}`}><Brand />{step === 'choose' && <span>Rotina inteligente</span>}</header>
+    <header className={`onboarding-nav ${step === 'choose' ? 'centered' : ''}`}><Brand />{step === 'choose' && <div className="onboarding-teca-greeting"><span className="onboarding-teca-picture"><TecaAvatar level={1} /></span><span><strong>Rotina inteligente</strong><small>Oi, eu sou a Teca. Vamos planejar no seu ritmo?</small></span></div>}</header>
     <section className="onboarding-main" aria-live="polite">
       {step === 'choose' && <div className="onboarding-choose">
         <div className="onboarding-board"><div className="onboarding-options" aria-label="Escolha como começar">

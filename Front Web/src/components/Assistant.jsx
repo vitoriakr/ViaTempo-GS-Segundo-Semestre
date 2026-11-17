@@ -47,7 +47,7 @@ export default function AssistantWidget({ todayEvents, events, nextEvent, confli
   const [open, setOpen] = useState(false);
   const [question, setQuestion] = useState('');
   const [messages, setMessages] = useState([]);
-  const xp = events.filter((event) => event.userFeedback).reduce((sum, event) => sum + (event.userFeedback === 'on-time' ? 30 : 10), 0);
+  const xp = events.filter((event) => event.userFeedback).reduce((sum, event) => sum + (event.userFeedback === 'on-time' ? 30 : 10), 0) + events.filter((event) => event.tecaChallengeStatus === 'accepted').length * 10;
   const level = Math.floor(xp / 100) + 1;
   const shell = level >= 6 ? 'shell-gold' : level >= 4 ? 'shell-purple' : level >= 2 ? 'shell-teal' : 'shell-starter';
   const bottomRef = useRef(null);

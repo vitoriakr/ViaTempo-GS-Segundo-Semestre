@@ -47,7 +47,8 @@ export default function App() {
     return [];
   }).slice(0, 4);
   const totalXp = sortedEvents.filter((event) => event.userFeedback).reduce((sum,event)=>sum+(event.userFeedback==='on-time'?30:10),0);
-  const tecaLevel = Math.floor(totalXp/100)+1;
+  const tecaBonus = sortedEvents.filter((event)=>event.tecaChallengeStatus==='accepted').length*10;
+  const tecaLevel = Math.floor((totalXp+tecaBonus)/100)+1;
   const placeFull = (id) => { const place = data.locations.find((item) => item.id === id); return place ? `${place.name} · ${place.address}` : ''; };
 
   async function completeOnboarding(payload) {
@@ -106,6 +107,16 @@ export default function App() {
       if (api.mode === 'local') await api.save(next);
       setData(next); setToast({ message: 'Obrigado pelo retorno. Isso ajuda a melhorar seu planejamento.', type: 'success' });
     } catch (error) { setToast({ message: `Não foi possível registrar seu retorno: ${error.message}`, type: 'error' }); }
+  }
+
+  async function answerTecaChallenge(event, accepted) {
+    const updated = { ...event, tecaChallengeStatus: accepted ? 'accepted' : 'declined', ...(accepted ? { bufferMinutes: Number(event.bufferMinutes || 0) + 5 } : {}) };
+    try {
+      const next = await api.upsertEvent(updated, data);
+      if (api.mode === 'local') await api.save(next);
+      setData(next);
+      setToast({ message: accepted ? 'Desafio concluído: +5 min de margem e +10 XP.' : 'Combinado. A Teca mantém o plano original.', type: 'success' });
+    } catch (error) { setToast({ message: `Não foi possível salvar a escolha: ${error.message}`, type: 'error' }); }
   }
 
   async function addPlace(place) {
@@ -167,12 +178,12 @@ export default function App() {
 
   if (!data.onboardingCompleted && !data.events.length) return <><Onboarding onComplete={completeOnboarding} /><Toast message={toast?.message} type={toast?.type} onClose={() => setToast(null)} /></>;
 
-  return <div className="app-frame">
+  return <div className={`app-frame${data.preferences?.darkMode ? ' is-dark' : ''}`} data-theme={data.preferences?.darkMode ? 'dark' : 'light'}>
     <Sidebar active={view} onNavigate={(next) => { setView(next); setMenuOpen(false); }} open={menuOpen} onClose={() => setMenuOpen(false)} />
     <main className="main-area"><Topbar title={viewTitles[view]} date={formattedToday} onMenu={() => setMenuOpen(true)} onAccount={() => setAccountOpen(true)} showHome={view !== 'home'} onHome={() => setView('home')} />
       <div className="page-body">
         {view === 'home' && <Dashboard todayEvents={todayEvents} nextEvent={nextEvent} recommendations={recommendations} conflicts={eventConflicts} today={today} placeFull={placeFull} tecaLevel={tecaLevel} onNew={() => setEventModal({ mode: 'new' })} onEdit={setEventModal} onDelete={setPendingDelete} onFeedback={changeRecommendation} onEventFeedback={recordOutcome} onNavigate={setView} />}
-        {view === 'journey' && <JourneyPage events={todayEvents} allEvents={sortedEvents} conflicts={eventConflicts} placeFull={placeFull} onNew={() => setEventModal({ mode: 'new' })} onEdit={setEventModal} onFeedback={recordOutcome} />}
+        {view === 'journey' && <JourneyPage events={todayEvents} allEvents={sortedEvents} conflicts={eventConflicts} placeFull={placeFull} onNew={() => setEventModal({ mode: 'new' })} onEdit={setEventModal} onFeedback={recordOutcome} onTecaChallenge={answerTecaChallenge} />}
         {view === 'agenda' && <AgendaPage events={sortedEvents} conflicts={eventConflicts} placeFull={placeFull} filter={agendaDate} setFilter={setAgendaDate} onNew={() => setEventModal({ mode: 'new' })} onEdit={setEventModal} onDelete={setPendingDelete} onFeedback={changeRecommendation} onEventFeedback={recordOutcome} />}
         {view === 'places' && <LocationsPanel locations={data.locations} onSave={addPlace} onDelete={removePlace} />}
         {view === 'data' && <ImportExportPanel data={data} onImport={importData} onDeleteData={deleteAllData} onNavigate={setView} />}
@@ -186,13 +197,25 @@ export default function App() {
   </div>;
 }
 
+function tecaSuggestionText(event, type, plan) {
+  const hour = Number((event.time || '12:00').slice(0, 2));
+  const morning = ['O dia está começando: deixe o essencial separado e saia sem correria.', 'Uma conferida rápida no destino agora pode deixar sua manhã mais leve.', 'Vamos no ritmo certo: prepare suas coisas com um pouco de antecedência.'];
+  const midday = ['Entre um compromisso e outro, reserve um respiro antes de seguir.', 'O caminho fica mais tranquilo quando a gente não aperta o relógio.', 'Se puder, confira o trajeto e mantenha uma pequena folga.'];
+  const evening = ['Fim de dia pede calma: não deixe a saída para a última hora.', 'Vamos fechar o dia sem correria; uma margem extra ajuda bastante.', 'Separe um minuto para se organizar antes de seguir para o próximo lugar.'];
+  const phrases = hour < 11 ? morning : hour < 17 ? midday : evening;
+  const seed = [...(event.title || '')].reduce((sum, char) => sum + char.charCodeAt(0), hour) % phrases.length;
+  if (type === 'delay') return `O trajeto pode levar mais ${plan.delay} min. ${phrases[seed]} Saída sugerida: ${formatTime(plan.recommendedDeparture)}.`;
+  if (type === 'margin') return `${phrases[seed]} Que tal acrescentar cinco minutos de margem?`;
+  return `${phrases[seed]} Confira este aviso antes de sair.`;
+}
+
 function Dashboard({ todayEvents, nextEvent, recommendations, conflicts, today, placeFull, tecaLevel, onNew, onEdit, onDelete, onFeedback, onEventFeedback, onNavigate }) {
   const plan = nextEvent && buildRecommendation(nextEvent);
   return <>
     <header className="page-intro"><div><h2>Meu dia</h2></div><div className="page-intro-actions"><button className="btn btn-dark" onClick={onNew}>＋ Novo compromisso</button></div></header>
     {nextEvent && <section className="next-plan"><div><span className="eyebrow">PRÓXIMO COMPROMISSO</span><h3>{nextEvent.title}</h3><p>{formatDate(nextEvent.date, { weekday: 'long', day: 'numeric', month: 'long' })} · {nextEvent.time}{placeFull(nextEvent.locationId) || nextEvent.importedLocation ? ` · ${placeFull(nextEvent.locationId) || nextEvent.importedLocation}` : ''}</p>{nextEvent.date !== today && (conflicts.get(nextEvent.id) || []).map((title, index) => <p className="conflict-warning" role="note" key={`${title}-${index}`}>Conflita com “{title}”</p>)}</div><div className="next-plan-times"><span>Preparar <strong>{formatTime(plan.recommendedPrepare)}</strong></span><span>Sair <strong>{formatTime(plan.recommendedDeparture)}</strong></span></div></section>}
     {recommendations.length > 0 && <section className="recommendation-section" aria-labelledby="recommendation-title"><div className="section-heading"><h2 id="recommendation-title">Recomendações <span>{recommendations.length}</span></h2></div><div className="recommendation-list">{recommendations.map(({ event, plan: suggestion, type }) => {
-      return <article className="recommendation-card" key={event.id}><div className="recommendation-copy"><TecaTip level={tecaLevel}>{type === 'delay' ? 'Vamos sair um pouco antes para chegar com tranquilidade.' : type === 'margin' ? 'Uma pequena margem deixa o caminho mais leve.' : 'Separei esse aviso para você planejar com calma.'}</TecaTip><span>{formatDate(event.date, { weekday: 'short', day: 'numeric', month: 'short' })} · {event.title}</span>{type === 'delay' && <p>O trajeto pode levar {suggestion.delay} min a mais. Mude a saída de <strong>{formatTime(suggestion.departure)}</strong> para <strong>{formatTime(suggestion.recommendedDeparture)}</strong>.</p>}{type === 'message' && <RecommendationMessage event={event} />}{type === 'margin' && <p>Sua margem é de {event.bufferMinutes} min. Adicione 5 min para ter mais tempo em caso de imprevisto.</p>}</div>{type === 'delay' && <><button className="btn btn-dark" onClick={() => onFeedback(event, 'accepted')}>Mudar horário</button><button className="recommendation-dismiss" onClick={() => onFeedback(event, 'rejected')}>Manter atual</button></>}{type === 'margin' && <button className="btn btn-dark" onClick={() => onFeedback(event, 'margin')}>Adicionar 5 min</button>}</article>;
+      return <article className="recommendation-card" key={event.id}><div className="recommendation-copy"><TecaTip level={tecaLevel}>{tecaSuggestionText(event,type,suggestion)}</TecaTip><span>{formatDate(event.date, { weekday: 'short', day: 'numeric', month: 'short' })} · {event.title}</span>{type === 'delay' && <p>O trajeto pode levar {suggestion.delay} min a mais. Mude a saída de <strong>{formatTime(suggestion.departure)}</strong> para <strong>{formatTime(suggestion.recommendedDeparture)}</strong>.</p>}{type === 'message' && <RecommendationMessage event={event} />}{type === 'margin' && <p>Sua margem é de {event.bufferMinutes} min. Adicione 5 min para ter mais tempo em caso de imprevisto.</p>}</div>{type === 'delay' && <><button className="btn btn-dark" onClick={() => onFeedback(event, 'accepted')}>Mudar horário</button><button className="recommendation-dismiss" onClick={() => onFeedback(event, 'rejected')}>Manter atual</button></>}{type === 'margin' && <button className="btn btn-dark" onClick={() => onFeedback(event, 'margin')}>Adicionar 5 min</button>}</article>;
     })}</div></section>}
     <section className="today-section"><div className="section-heading"><h2>Compromissos de hoje <span>{todayEvents.length}</span></h2><button className="text-button" onClick={() => onNavigate('agenda')}>Ver agenda →</button></div>
       {todayEvents.length ? <div className="event-list">{todayEvents.map((event) => <EventCard key={event.id} event={event} location={placeFull(event.locationId)} conflicts={conflicts.get(event.id)} onEdit={onEdit} onDelete={onDelete} onFeedback={onFeedback} onEventFeedback={onEventFeedback} />)}</div> : <EmptyState title="Nada planejado para hoje" text="Adicione um compromisso para criar seu primeiro plano." action={<button className="btn btn-outline-dark" onClick={onNew}>＋ Adicionar compromisso</button>} />}
@@ -200,18 +223,22 @@ function Dashboard({ todayEvents, nextEvent, recommendations, conflicts, today, 
   </>;
 }
 
-function JourneyPage({ events, allEvents, conflicts, placeFull, onNew, onEdit, onFeedback }) {
+function JourneyPage({ events, allEvents, conflicts, placeFull, onNew, onEdit, onFeedback, onTecaChallenge }) {
+  const [tecaReply, setTecaReply] = useState('');
   const now = new Date();
   const past = events.filter((event) => new Date(`${event.date}T${event.time}`) < now);
   const recorded = past.filter((event) => event.userFeedback);
-  const xp = allEvents.filter((event) => event.userFeedback).reduce((sum, event) => sum + (event.userFeedback === 'on-time' ? 30 : 10), 0);
+  const xp = allEvents.filter((event) => event.userFeedback).reduce((sum, event) => sum + (event.userFeedback === 'on-time' ? 30 : 10), 0) + allEvents.filter((event)=>event.tecaChallengeStatus==='accepted').length*10;
   const level = Math.floor(xp / 100) + 1;
   const avatar = level >= 6 ? { emoji: '🧙', name: 'Mestre do Tempo', skin: 'master' } : level >= 4 ? { emoji: '🦊', name: 'Guardião da Trilha', skin: 'guardian' } : level >= 2 ? { emoji: '🧭', name: 'Navegador', skin: 'navigator' } : { emoji: '🐣', name: 'Explorador', skin: 'explorer' };
   const islands = [{ xp: 0, name: 'Ilha do Começo', emoji: '🌱' }, { xp: 100, name: 'Ilha das Rotinas', emoji: '🌴' }, { xp: 300, name: 'Ilha da Pontualidade', emoji: '🏝️' }, { xp: 600, name: 'Arquipélago do Tempo', emoji: '🌋' }];
   const next = events.find((event) => new Date(`${event.date}T${event.time}`) >= now);
+  const challengeEvent = events.find((event) => new Date(`${event.date}T${event.time}`) >= now && !event.tecaChallengeStatus);
+  const challengePlan = challengeEvent && buildRecommendation(challengeEvent);
   return <div className="journey-page">
     <header className="page-intro"><div><span className="eyebrow">SEU DIA EM MOVIMENTO</span><h2>Jornada de hoje</h2></div><button className="btn btn-dark" onClick={onNew}>＋ Nova missão</button></header>
     <section className="journey-score"><div className="journey-level"><span className={`journey-avatar ${avatar.skin}`} aria-label={`Avatar: ${avatar.name}`}>{avatar.emoji}</span><div><span>NÍVEL {level} · {avatar.name}</span><strong>{xp} XP</strong></div></div><div className="journey-progress"><div><strong>{recorded.length} de {events.length}</strong><span>missões de hoje</span></div><div className="journey-progress-track"><i style={{width:`${events.length ? Math.round(recorded.length/events.length*100) : 0}%`}} /></div><small>{100-(xp%100)} XP para o próximo nível</small></div><div className="journey-next"><span>PRÓXIMO PASSO</span><strong>{next ? `${next.time} · ${next.title}` : events.length ? 'Dia concluído!' : 'Sua jornada começa aqui'}</strong></div></section>
+    <section className="teca-journey-panel"><div className="teca-journey-intro"><TecaAvatar level={level} /><div><span>UM DESAFIO DA TECA</span><strong>{challengeEvent ? `Topa sair com 5 min extras para ${challengeEvent.title}?` : 'Seu plano está no ritmo certo.'}</strong><small>{challengeEvent ? `Adicionar margem à saída das ${challengeEvent.time} · +10 XP` : 'Volte quando tiver um próximo compromisso.'}</small></div></div>{challengeEvent?<div className="teca-challenge-actions"><button className="btn btn-sm btn-dark" onClick={()=>onTecaChallenge(challengeEvent,true)}>Aceitar desafio</button><button className="teca-skip" onClick={()=>onTecaChallenge(challengeEvent,false)}>Agora não</button></div>:<span className="teca-challenge-done">✓ Jornada em dia</span>}<div className="teca-qa"><span>Pergunte à Teca</span><div><button onClick={()=>setTecaReply(next?`Seu próximo passo é ${next.title}, às ${next.time}. A Teca sugere se preparar às ${formatTime(buildRecommendation(next).recommendedPrepare)} e sair às ${formatTime(buildRecommendation(next).recommendedDeparture)}.`:'Sua agenda está livre. Quando adicionar um compromisso, eu ajudo a planejar a saída.')}>Qual é meu próximo passo?</button><button onClick={()=>setTecaReply(events.length?`Hoje você tem ${events.length} compromisso${events.length===1?'':'s'}. ${recorded.length} já tiveram retorno registrado. Um passo de cada vez!`:'Ainda não há compromissos para hoje.')}>Como está minha jornada?</button></div>{tecaReply&&<p aria-live="polite">{tecaReply}</p>}</div></section>
     <section className="island-map"><div className="island-map-title"><h3>Ilhas da jornada</h3><span>Desbloqueadas com XP</span></div><div className="island-chain">{islands.map((island,index)=>{const unlocked=xp>=island.xp;return <div className={`island-stop${unlocked?' unlocked':''}`} key={island.name}><span className="island-link" aria-hidden="true">{index>0?'······':''}</span><div className="island-art">{unlocked?island.emoji:'🔒'}</div><strong>{island.name}</strong><small>{island.xp===0?'Desbloqueada':unlocked?'Conquistada':`${island.xp} XP`}</small></div>;})}</div></section>
     <div className="journey-heading"><h3>Trilha de compromissos</h3><span>{events.length} no roteiro</span></div>
     {!events.length ? <div className="journey-empty"><span>✧</span><h3>Uma página em branco</h3><p>Adicione o primeiro compromisso e monte sua trilha de hoje.</p><button className="btn btn-dark" onClick={onNew}>Criar compromisso</button></div> : <div className="journey-track">{events.map((event,index)=>{const done=Boolean(event.userFeedback);const isPast=new Date(`${event.date}T${event.time}`)<now;const plan=buildRecommendation(event);const obstacle=conflicts.get(event.id)?.length?'Conflito de horários':event.trafficDelay>=(event.alertThreshold||5)&&event.trafficDelay>0?'Atraso no trajeto':'';return <article className={`journey-stop${done?' is-done':''}${!done&&isPast?' needs-checkin':''}`} key={event.id}><div className="journey-node"><span>{done?'✓':String(index+1).padStart(2,'0')}</span></div><div className="journey-card"><div className="journey-card-top"><time>{event.time}</time><span className="journey-status">{done?(event.userFeedback==='on-time'?'No horário · +30 XP':'Cheguei · +10 XP'):isPast?'Registrar chegada':next?.id===event.id?'Próxima parada':'A caminho'}</span></div><h4>{event.title}</h4><p>{placeFull(event.locationId)||event.importedLocation||'Sem destino'}</p>{obstacle&&<div className="journey-obstacle"><span aria-hidden="true">⚠</span><div><strong>Obstáculo na trilha</strong><small>{obstacle}{conflicts.get(event.id)?.length?` · ${conflicts.get(event.id).join(', ')}`:''}{event.trafficDelay>0?` · +${event.trafficDelay} min`:''}</small></div></div>}{!done&&!isPast&&<div className="journey-plan"><TecaTip level={level}>Saída {formatTime(plan.recommendedDeparture)} · preparação {formatTime(plan.recommendedPrepare)}</TecaTip></div>}<div className="journey-actions"><button className="journey-edit" onClick={()=>onEdit(event)}>Editar</button>{isPast&&!done&&<><button className="btn btn-sm btn-dark" onClick={()=>onFeedback(event,'on-time')}>Cheguei no horário</button><button className="journey-late" onClick={()=>onFeedback(event,'late')}>Com atraso</button></>}</div></div></article>;})}</div>}

@@ -351,3 +351,75 @@ body{background:radial-gradient(ellipse at 80% 8%,rgba(169,201,255,.28),transpar
 .calendar-import-help summary::-webkit-details-marker{display:none}.calendar-import-help summary:after{content:'+';float:right;font-size:16px;line-height:14px}.calendar-import-help[open] summary:after{content:'−'}
 .calendar-help-content{display:grid;gap:8px;margin-top:11px}.calendar-help-content p{display:grid;gap:2px;margin:0;color:#65748a;font-size:11px;line-height:1.4}.calendar-help-content strong{color:#304662;font-size:11px}
 @media(max-width:600px){.week-time-gutter,.week-day-column{height:690px}.calendar-empty{min-height:175px}.calendar-help-content p{font-size:10px}}
+
+/* The hour-column height belongs only to the scrollable grid, never its day header. */
+.week-calendar-head{height:52px;min-height:52px;align-items:stretch}
+.week-calendar-head .week-time-gutter{height:52px;min-height:52px}
+.week-day-head{height:52px;min-height:52px}
+
+.teca-journey-panel{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:14px 20px;margin:18px 0 24px;padding:17px 19px;border:1px solid rgba(119,171,112,.24);border-radius:19px;background:linear-gradient(115deg,rgba(244,251,239,.94),rgba(255,255,255,.76));box-shadow:0 9px 26px rgba(70,117,70,.07)}
+.teca-journey-intro{display:flex;align-items:center;gap:12px;min-width:0}.teca-journey-intro>.teca-avatar{width:48px;height:48px;padding:4px;border-radius:16px;background:#e4f2dd}.teca-journey-intro>div{display:grid;gap:3px}.teca-journey-intro span,.teca-qa>span{color:#5a8758;font-size:9px;font-weight:750;letter-spacing:.1em}.teca-journey-intro strong{color:#304a34;font-size:13px}.teca-journey-intro small{color:#738873;font-size:10px}.teca-challenge-actions{display:flex;align-items:center;gap:8px}.teca-skip{padding:7px 9px;border:0;background:transparent;color:#688068;font-size:11px}.teca-skip:hover{text-decoration:underline}.teca-challenge-done{padding:7px 10px;border-radius:99px;background:#e2f3df;color:#48784d;font-size:10px;font-weight:700;white-space:nowrap}
+.teca-qa{grid-column:1/-1;display:grid;gap:8px;padding-top:11px;border-top:1px solid rgba(94,139,91,.15)}.teca-qa>div{display:flex;flex-wrap:wrap;gap:7px}.teca-qa button{padding:6px 10px;border:1px solid rgba(98,145,97,.2);border-radius:99px;background:rgba(255,255,255,.7);color:#557358;font-size:10px}.teca-qa button:hover{background:#e9f5e5}.teca-qa p{margin:0;padding:9px 11px;border-radius:10px;background:rgba(255,255,255,.65);color:#425c45;font-size:11px;line-height:1.45}
+@media(max-width:700px){.teca-journey-panel{grid-template-columns:1fr;gap:12px;padding:15px}.teca-challenge-actions{justify-content:flex-start}.teca-qa{grid-column:auto}}
+
+/* Teca navy palette: friendly shell in deep, clean blues. */
+.assistant-launcher.teca-launcher{background:linear-gradient(145deg,#eff5ff,#d1def2);box-shadow:0 13px 34px rgba(19,45,84,.24),inset 0 1px 0 #fff}
+.assistant-launcher.teca-launcher:hover{box-shadow:0 17px 38px rgba(19,45,84,.3),inset 0 1px 0 #fff}
+.teca-avatar .teca-body{fill:#abc4e4;stroke:#294c79;stroke-width:1.6}.teca-avatar .teca-shell{fill:#102e56;stroke:#081d38;stroke-width:1.9}.teca-avatar .teca-shell-mark{stroke:#6d91bf;stroke-width:1.3}.teca-avatar .teca-head{fill:#bfd2eb;stroke:#294c79;stroke-width:1.5}.teca-avatar .teca-eye{fill:#102844}.teca-avatar .teca-smile{stroke:#345982}.teca-avatar .teca-cheek{fill:#8faed4}
+.teca-avatar.shell-teal .teca-shell{fill:#174573;stroke:#0b2c51}.teca-avatar.shell-teal .teca-shell-mark{stroke:#78a5d0}.teca-avatar.shell-purple .teca-shell{fill:#2b4775;stroke:#172e52}.teca-avatar.shell-purple .teca-shell-mark{stroke:#a0b6db}.teca-avatar.shell-gold .teca-shell{fill:#5076a8;stroke:#294c79}.teca-avatar.shell-gold .teca-shell-mark{stroke:#c4d6ef}
+.teca-launcher .teca-avatar{width:46px;height:46px}.teca-name-tag{background:#183d6b}.assistant-avatar{background:linear-gradient(145deg,#f7faff,#dfe9f7)}
+.teca-tip{border-color:rgba(58,100,155,.2);background:linear-gradient(105deg,rgba(236,244,255,.95),rgba(255,255,255,.74))}.teca-tip-avatar{background:#dce8f7}.teca-tip-copy>span{color:#355d8e}.teca-tip-copy p{color:#445a75}
+.teca-journey-panel{border-color:rgba(63,105,161,.2);background:linear-gradient(115deg,rgba(235,243,255,.95),rgba(255,255,255,.78));box-shadow:0 9px 26px rgba(38,70,116,.07)}.teca-journey-intro>.teca-avatar{background:#dce8f7}.teca-journey-intro span,.teca-qa>span{color:#355d8e}.teca-journey-intro strong{color:#263e5f}.teca-journey-intro small{color:#687e9b}.teca-skip{color:#536e91}.teca-challenge-done{background:#e3edfa;color:#355d8e}.teca-qa button{border-color:rgba(58,100,155,.2);color:#355d8e}.teca-qa button:hover{background:#e8f0fc}.teca-qa p{color:#405775}
+.dark-mode-setting{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 13px;border:1px solid rgba(67,104,155,.17);border-radius:12px;background:rgba(239,245,255,.65);cursor:pointer}.dark-mode-setting>span{display:grid;gap:2px}.dark-mode-setting strong{color:#263e5f;font-size:12px}.dark-mode-setting small{color:#7889a0;font-size:10px}.dark-mode-setting input{position:absolute;opacity:0;pointer-events:none}.dark-mode-setting i{position:relative;width:42px;height:24px;flex:none;border-radius:99px;background:#c9d4e3;transition:background .18s}.dark-mode-setting i:after{content:'';position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 4px #0002;transition:transform .18s}.dark-mode-setting input:checked+i{background:#244f84}.dark-mode-setting input:checked+i:after{transform:translateX(18px)}.dark-mode-setting input:focus-visible+i{outline:3px solid #79a7e7;outline-offset:3px}
+/* Site-wide dark palette, persisted through the account preference. */
+body:has(.app-frame.is-dark){background:#0b1220;color:#e3eaf4}
+.app-frame.is-dark{color:#e3eaf4;background:radial-gradient(ellipse at 82% 5%,rgba(36,67,111,.34),transparent 37%),#0b1220}
+.app-frame.is-dark .app-sidebar,.app-frame.is-dark .topbar{background:rgba(12,21,36,.88);border-color:rgba(132,162,204,.15);box-shadow:0 8px 28px rgba(0,0,0,.18)}
+.app-frame.is-dark .brand-lockup,.app-frame.is-dark .topbar h1,.app-frame.is-dark h2,.app-frame.is-dark h3,.app-frame.is-dark h4,.app-frame.is-dark strong{color:#e4edf9}
+.app-frame.is-dark .topbar-title>span,.app-frame.is-dark p,.app-frame.is-dark small,.app-frame.is-dark .muted-copy,.app-frame.is-dark .eyebrow{color:#a4b2c7}
+.app-frame.is-dark .side-link{color:#aab8cc}.app-frame.is-dark .side-link.active,.app-frame.is-dark .side-link:hover{background:rgba(49,87,143,.3);color:#d9e8ff}
+.app-frame.is-dark .preferences-button,.app-frame.is-dark .mobile-menu,.app-frame.is-dark .account-icon-button,.app-frame.is-dark .topbar-home,.app-frame.is-dark .data-back-button{background:rgba(28,44,68,.9);border-color:rgba(124,159,207,.24);color:#dceaff}
+.app-frame.is-dark .setup-card,.app-frame.is-dark .content-panel,.app-frame.is-dark .empty-state,.app-frame.is-dark .next-plan,.app-frame.is-dark .agenda-panel,.app-frame.is-dark .modal-dialog-custom,.app-frame.is-dark .event-card,.app-frame.is-dark .calendar-panel,.app-frame.is-dark .calendar-empty,.app-frame.is-dark .month-calendar,.app-frame.is-dark .journey-card,.app-frame.is-dark .journey-score,.app-frame.is-dark .island-map,.app-frame.is-dark .data-board,.app-frame.is-dark .data-choice-card,.app-frame.is-dark .journey-empty{background:rgba(19,31,50,.88);border-color:rgba(132,162,204,.17);box-shadow:0 10px 30px rgba(0,0,0,.16)}
+.app-frame.is-dark .calendar-toolbar h3,.app-frame.is-dark .calendar-navigation h3,.app-frame.is-dark .journey-card h4,.app-frame.is-dark .journey-heading h3,.app-frame.is-dark .island-map-title h3{color:#dce8f8}
+.app-frame.is-dark .calendar-modes,.app-frame.is-dark .week-calendar,.app-frame.is-dark .week-calendar-head,.app-frame.is-dark .month-weekdays,.app-frame.is-dark .week-time-gutter{background:rgba(13,23,39,.9)}
+.app-frame.is-dark .calendar-modes button{color:#a7b8d0}.app-frame.is-dark .calendar-modes button.active,.app-frame.is-dark .calendar-arrow,.app-frame.is-dark .calendar-today{background:#233854;color:#e1ecfb;border-color:#334e70}
+.app-frame.is-dark .week-day-head,.app-frame.is-dark .month-weekdays span,.app-frame.is-dark .week-time-gutter span{color:#9bacbf}.app-frame.is-dark .week-day-head strong,.app-frame.is-dark .month-date{color:#dce8f8}
+.app-frame.is-dark .week-calendar-head,.app-frame.is-dark .week-day-column,.app-frame.is-dark .week-hour-line,.app-frame.is-dark .month-cell{border-color:rgba(132,162,204,.14)}
+.app-frame.is-dark .week-day-column.is-today{background:rgba(45,84,139,.18)}.app-frame.is-dark .month-cell.outside{background:rgba(10,18,31,.45)}
+.app-frame.is-dark .event-summary h3,.app-frame.is-dark .event-card h3,.app-frame.is-dark .journey-status{color:#e0ebfa}.app-frame.is-dark .event-summary p,.app-frame.is-dark .event-details summary,.app-frame.is-dark .journey-card>p{color:#aab8cc}
+.app-frame.is-dark .form-control,.app-frame.is-dark .form-select,.app-frame.is-dark input,.app-frame.is-dark textarea{background:#111f34;border-color:#344b69;color:#e3eaf4}.app-frame.is-dark input::placeholder{color:#91a1b8}
+.app-frame.is-dark .assistant-panel{background:rgba(16,28,46,.97);border-color:rgba(135,169,216,.22)}.app-frame.is-dark .assistant-widget-header,.app-frame.is-dark .assistant-overview,.app-frame.is-dark .assistant-messages{background:rgba(28,44,68,.88);border-color:rgba(135,169,216,.2)}.app-frame.is-dark .assistant-widget-header h2,.app-frame.is-dark .assistant-overview p{color:#e1ebf8}.app-frame.is-dark .assistant-message.assistant{background:#213550;color:#e1ebf8}.app-frame.is-dark .assistant-close{background:#293d59;color:#e1ebf8}
+.app-frame.is-dark .teca-journey-panel,.app-frame.is-dark .teca-tip,.app-frame.is-dark .dark-mode-setting{background:linear-gradient(120deg,rgba(25,44,70,.96),rgba(19,31,50,.95));border-color:rgba(98,142,199,.25)}.app-frame.is-dark .teca-journey-intro strong,.app-frame.is-dark .teca-tip-copy p,.app-frame.is-dark .teca-qa p,.app-frame.is-dark .dark-mode-setting strong{color:#dce8f8}.app-frame.is-dark .teca-journey-intro span,.app-frame.is-dark .teca-qa>span,.app-frame.is-dark .teca-tip-copy>span{color:#9fc2ef}.app-frame.is-dark .teca-journey-intro small,.app-frame.is-dark .dark-mode-setting small{color:#a3b4ca}.app-frame.is-dark .teca-qa button{background:#1b2f4b;color:#cfe0f5;border-color:#375574}.app-frame.is-dark .teca-qa p{background:rgba(25,43,66,.8)}
+.app-frame.is-dark .modal-heading,.app-frame.is-dark .modal-footer-custom,.app-frame.is-dark .event-card,.app-frame.is-dark .journey-plan{border-color:rgba(132,162,204,.16)}.app-frame.is-dark .account-summary{background:#172a44;border-color:#30496a;color:#b1c1d5}.app-frame.is-dark .account-summary strong{color:#b9d4f6}.app-frame.is-dark .journey-obstacle{background:#342b20;border-color:#6e5738}
+
+/* Unify reward, completion, avatar progression, and success feedback in Teca blues. */
+.journey-avatar.navigator{background:linear-gradient(145deg,#d9eaff,#8eb5e8);box-shadow:0 7px 18px rgba(44,105,200,.18)}
+.journey-avatar.guardian{background:linear-gradient(145deg,#c9dcf7,#6389bd);box-shadow:0 7px 18px rgba(27,68,121,.2)}
+.journey-avatar.master{background:linear-gradient(145deg,#b4cdec,#315b91);box-shadow:0 7px 18px rgba(16,46,86,.25)}
+.teca-xp{background:#e3edfb;color:#234f86;border:1px solid rgba(44,105,200,.14)}
+.journey-stop.is-done .journey-status{background:#e5eefb;color:#315d96}
+.journey-stop.needs-checkin .journey-node{background:#e3edfb;color:#315d96}
+.teca-challenge-done{background:#e3edfb;color:#315d96;border:1px solid rgba(44,105,200,.12)}
+.toast-message:not(.error){border-color:rgba(44,105,200,.2);background:rgba(244,248,255,.94);color:#294c79}
+.toast-message:not(.error)>span{color:#2c69c8}
+.app-frame.is-dark .teca-xp,.app-frame.is-dark .journey-stop.is-done .journey-status,.app-frame.is-dark .journey-stop.needs-checkin .journey-node,.app-frame.is-dark .teca-challenge-done{background:#233e63;color:#c7dcf8;border-color:#3d5d87}
+.app-frame.is-dark .toast-message:not(.error){background:rgba(20,36,58,.96);border-color:#3d5d87;color:#dceaff}
+.app-frame.is-dark .toast-message:not(.error)>span{color:#9fc2ef}
+
+/* Final green accents identified in the screenshot. */
+.recommendation-card{border-left-color:#2c69c8!important}
+.assistant-launcher.teca-launcher.is-open{background:linear-gradient(145deg,#e7f0ff,#b9cfee)!important;box-shadow:0 13px 34px rgba(19,45,84,.24),inset 0 1px 0 #fff}
+
+/* Sidebar hover follows the ViaTempo blue accent. */
+.app-sidebar .side-link:hover{background:rgba(44,105,200,.12);color:#234f91}
+.app-sidebar .side-link:hover .vt-icon{color:#2c69c8}
+.app-frame.is-dark .app-sidebar .side-link:hover{background:rgba(71,124,197,.25);color:#d9e8ff}
+
+.onboarding-nav.centered{gap:9px}
+.onboarding-teca-greeting{display:flex;align-items:center;gap:11px;padding:8px 14px 8px 8px;border:1px solid rgba(44,105,200,.14);border-radius:18px;background:rgba(255,255,255,.6);box-shadow:0 7px 20px rgba(43,87,151,.07)}
+.onboarding-teca-picture{width:44px;height:44px;display:grid;place-items:center;border:1px solid rgba(44,105,200,.12);border-radius:15px;background:linear-gradient(145deg,#fff,#e4eefc)}
+.onboarding-teca-picture .teca-avatar{width:39px;height:39px}
+.onboarding-teca-greeting>span:last-child{display:grid;gap:1px;text-align:left}
+.onboarding-teca-greeting strong{color:#284c7c;font-size:12px;font-weight:700}
+.onboarding-teca-greeting small{color:#687d99;font-size:10px}
+@media(max-width:700px){.onboarding-nav.centered{min-height:166px}.onboarding-teca-greeting{padding:7px 11px 7px 7px}.onboarding-teca-picture{width:40px;height:40px}.onboarding-teca-picture .teca-avatar{width:35px;height:35px}}
