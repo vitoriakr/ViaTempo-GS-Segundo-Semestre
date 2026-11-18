@@ -1,0 +1,16 @@
+[
+  {
+    "data_hora": "2026-11-16 16:43",
+    "compromisso": "Estágio",
+    "causa": "Acidente no trajeto",
+    "saida_sugerida": "12:25",
+    "decisao": "Rejeitar"
+  },
+  {
+    "data_hora": "2026-11-16 21:10",
+    "compromisso": "academia",
+    "causa": "Obra no caminho",
+    "saida_sugerida": "17:04",
+    "decisao": "Aceitar"
+  }
+]
