@@ -34,21 +34,36 @@ O primeiro acesso começa sem compromissos: a pessoa escolhe cadastrar a rotina,
 
 React, React DOM, Bootstrap 5 e Vite. Não usamos bibliotecas adicionais de ícones, calendário, estado ou análise.
 
+## Interações e regras de negócio
+
+- O estado compartilhado da agenda, dos locais, das preferências e dos retornos fica no componente principal; `useState` controla formulários e modais locais, `useEffect` carrega/sincroniza dados e `useMemo` prepara listas, conflitos e recomendações.
+- As regras de horário estão em `src/utils/schedule.js`: o sistema calcula preparação e saída a partir do compromisso, deslocamento e margem; também detecta sobreposição de períodos e gera sugestões explicáveis.
+- O CRUD de compromissos e locais é assíncrono e centralizado em `src/services/api.js`. Sem API configurada, usa `localStorage`; com `VITE_API_URL`, consome as rotas REST descritas abaixo. Erros são apresentados na interface e o estado só é atualizado após a operação.
+- Formulários e importadores verificam campos obrigatórios, limites e formatos de data/hora/arquivo; falhas de leitura ou gravação mostram mensagens acessíveis, e ações concluídas mostram confirmação.
+- Os dados são organizados em objetos e listas de eventos/locais; `Map` e `Set` apoiam a associação de destinos, deduplicação e detecção de conflitos. A classe `Agenda` encapsula a ordenação e a detecção de conflitos; os eventos são objetos e listas, com `Map`/`Set` usados para associações e deduplicação.
+
 ## Como executar
 
-Requer Node.js 20.19+ ou 22.12+.
+O aplicativo está na pasta `Front Web` dentro do repositório. Requer Node.js 20.19+ ou 22.12+ e npm (incluído na instalação do Node.js).
+
+Se você acabou de clonar o repositório, entre na pasta do aplicativo:
 
 ```bash
+cd "Front Web"
 npm install
 npm run dev
 ```
 
-O terminal mostrará o endereço local do Vite. Para gerar a versão estática:
+O `npm install` baixa as dependências descritas em `package-lock.json`. O `npm run dev` inicia o servidor local; abra no navegador o endereço exibido no terminal (normalmente `http://localhost:5173`). Para parar o servidor, pressione `Ctrl+C` no terminal.
+
+Para gerar e visualizar a versão de produção:
 
 ```bash
 npm run build
 npm run preview
 ```
+
+O comando `npm run build` cria os arquivos prontos para publicação em `dist/`. O `npm run preview` serve essa versão localmente e informa no terminal o endereço para abrir.
 
 Sem configuração adicional, o app persiste no `localStorage` deste navegador. Esses dados não são sincronizados entre dispositivos.
 
@@ -117,8 +132,8 @@ O primeiro acesso usa uma tela de entrada progressiva. Compromissos antigos de d
 
 A interface reúne mais de oito componentes React reutilizáveis e mantém apresentação, agenda/cálculos e acesso a dados em módulos distintos. Conflitos entre períodos de preparação e compromissos são sinalizados. O assistente é uma simulação local baseada em regras, não um modelo de IA nem aconselhamento automatizado. Do escopo funcional do produto, autenticação e recuperação de senha, estimativa por serviço de mapas, monitoramento de trânsito e notificações configuráveis ainda dependem de serviços que não acompanham este front-end. O atraso disponível é simulado e informado como tal.
 
-O desafio de Front-end também pede pelo menos 15 commits significativos no histórico Git. O repositório contém 3 commits no total (2 nesta branch de trabalho); a equipe ainda precisa completar o histórico com commits reais durante o desenvolvimento. O acesso do professor ao repositório privado deve ser concedido pela equipe na plataforma Git.
+O desafio de Front-end também pede pelo menos 15 commits significativos no histórico Git. O histórico atual do repositório contém 18 commits. A equipe deve manter o histórico atualizado com commits reais e descritivos durante o desenvolvimento. O acesso do professor ao repositório privado deve ser concedido pela equipe na plataforma Git.
 
 ## Equipe
 
-Veja [INTEGRANTES.md](./INTEGRANTES.md). O professor deve receber acesso ao repositório privado conforme a tarefa FIAP.
+A entrega inclui [AI.md](./AI.md), [PROMPT.md](./PROMPT.md) e [INTEGRANTES.md](./INTEGRANTES.md). O professor deve receber acesso ao repositório privado conforme a tarefa FIAP.
