@@ -2,22 +2,6 @@
 
 **Seu caminho, no tempo certo.** Aplicação web responsiva para planejar compromissos e estimar quando começar a preparação e sair para um destino.
 
-## Ficha CitizenTech
-
-- **Nome:** ViaTempo — seu caminho, no tempo certo.
-- **Cidade:** Porto Alegre, RS.
-- **Bairro de validação:** a definir com cidadãos durante a pesquisa de campo.
-- **Cidadão beneficiado:** estudantes, trabalhadores e pessoas com compromissos presenciais e deslocamentos recorrentes.
-- **Problema:** mudanças no deslocamento são percebidas tarde e exigem que cada pessoa reorganize manualmente sua rotina.
-- **Como funciona:** a pessoa cria ou importa compromissos, informa destino, duração da preparação, deslocamento e margem. O ViaTempo calcula horários e apresenta sugestões explicáveis que podem ser aceitas ou rejeitadas.
-- **Partes:** esta entrega implementa a interface React/Bootstrap, os cálculos locais e a importação/exportação interoperável em JSON/ICS. O JSON pode alimentar a análise Python da equipe; trânsito em tempo real e dispositivos IoT dependem das demais entregas e integrações.
-- **Ecossistema:** cidadãos que informam suas rotinas e feedback; equipe do projeto; serviços de calendário; futuras fontes de mobilidade e parceiros públicos de dados urbanos.
-- **Repositório:** [github.com/vitoriakr/viatempo](https://github.com/vitoriakr/viatempo).
-- **Indicador proposto:** proporção de compromissos em que a pessoa relata chegada no horário; registrar também a taxa de recomendações aceitas e a variação entre o horário recomendado e o realizado.
-- **ODS:** ODS 11 — Cidades e comunidades sustentáveis, com contribuição para deslocamentos urbanos mais previsíveis e melhor acesso a compromissos. ODS 10 — Redução das desigualdades, pela intenção de tornar informação de rotina mais compreensível e acessível.
-
-O primeiro acesso começa sem compromissos: a pessoa escolhe cadastrar a rotina, importar um calendário ou carregar um JSON. A interface usa azul, branco e preto, com superfícies translúcidas e detalhes sob demanda. Esta versão não lê trânsito em tempo real nem altera calendários, alarmes ou reuniões externos.
-
 ## Requisitos e funcionalidades cobertos
 
 - Criar, listar, editar e excluir compromissos e destinos.
@@ -71,15 +55,15 @@ Sem configuração adicional, o app persiste no `localStorage` deste navegador. 
 
 Defina `VITE_API_URL` no ambiente de desenvolvimento. O adaptador espera estes recursos JSON no serviço configurado:
 
-| Método | Caminho | Uso |
-|---|---|---|
-| GET | `/viatempo` | Retornar `{ "events": [], "locations": [], "preferences": {}, "feedback": [] }` |
-| PUT | `/viatempo` | Salvar o conjunto importado, preferências e remoção de dados |
-| POST | `/events` | Criar compromisso |
-| PUT | `/events/:id` | Atualizar compromisso ou feedback |
-| DELETE | `/events/:id` | Excluir compromisso |
-| POST | `/locations` | Criar local |
-| DELETE | `/locations/:id` | Excluir local |
+| Método | Caminho          | Uso                                                                             |
+| ------ | ---------------- | ------------------------------------------------------------------------------- |
+| GET    | `/viatempo`      | Retornar `{ "events": [], "locations": [], "preferences": {}, "feedback": [] }` |
+| PUT    | `/viatempo`      | Salvar o conjunto importado, preferências e remoção de dados                    |
+| POST   | `/events`        | Criar compromisso                                                               |
+| PUT    | `/events/:id`    | Atualizar compromisso ou feedback                                               |
+| DELETE | `/events/:id`    | Excluir compromisso                                                             |
+| POST   | `/locations`     | Criar local                                                                     |
+| DELETE | `/locations/:id` | Excluir local                                                                   |
 
 O navegador envia e recebe JSON com `Content-Type: application/json`. A API deve permitir CORS para a origem do front-end e proteger os dados em trânsito e em repouso. Este repositório não contém um servidor/API configurado; sem `VITE_API_URL`, o CRUD funciona localmente. Para conectar a API que será entregue em outra disciplina, o contrato de rotas pode ser ajustado em `src/services/api.js`.
 
@@ -132,8 +116,8 @@ O primeiro acesso usa uma tela de entrada progressiva. Compromissos antigos de d
 
 A interface reúne mais de oito componentes React reutilizáveis e mantém apresentação, agenda/cálculos e acesso a dados em módulos distintos. Conflitos entre períodos de preparação e compromissos são sinalizados. O assistente é uma simulação local baseada em regras, não um modelo de IA nem aconselhamento automatizado. Do escopo funcional do produto, autenticação e recuperação de senha, estimativa por serviço de mapas, monitoramento de trânsito e notificações configuráveis ainda dependem de serviços que não acompanham este front-end. O atraso disponível é simulado e informado como tal.
 
-O desafio de Front-end também pede pelo menos 15 commits significativos no histórico Git. O histórico atual do repositório contém 18 commits. A equipe deve manter o histórico atualizado com commits reais e descritivos durante o desenvolvimento. O acesso do professor ao repositório privado deve ser concedido pela equipe na plataforma Git.
+O histórico do repositório contém 19 commits, atendendo ao mínimo de 15 commits significativos indicado no desafio de Front-end. A equipe deve manter o histórico atualizado com commits reais e descritivos. O acesso do professor ao repositório privado deve ser concedido pela equipe na plataforma Git.
 
 ## Equipe
 
-A entrega inclui [AI.md](./AI.md), [PROMPT.md](./PROMPT.md) e [INTEGRANTES.md](./INTEGRANTES.md). O professor deve receber acesso ao repositório privado conforme a tarefa FIAP.
+A entrega inclui [AI.md](./AI.md), [PROMPT.md](./PROMPT.md) e [INTEGRANTES.md](./INTEGRANTES.md).
