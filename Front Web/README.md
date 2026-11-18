@@ -134,7 +134,3 @@ O primeiro acesso usa uma tela de entrada progressiva. Compromissos antigos de d
 A interface reúne mais de oito componentes React reutilizáveis e mantém apresentação, agenda/cálculos e acesso a dados em módulos distintos. Conflitos entre períodos de preparação e compromissos são sinalizados. O assistente é uma simulação local baseada em regras, não um modelo de IA nem aconselhamento automatizado. Do escopo funcional do produto, autenticação e recuperação de senha, estimativa por serviço de mapas, monitoramento de trânsito e notificações configuráveis ainda dependem de serviços que não acompanham este front-end. O atraso disponível é simulado e informado como tal.
 
 O histórico atualizado do repositório ultrapassa o mínimo de 15 commits significativos indicado no desafio de Front-end. A equipe deve mantê-lo com commits reais e descritivos. O acesso do professor ao repositório privado deve ser concedido pela equipe na plataforma Git.
-
-## Equipe
-
-A entrega inclui [AI.md](./AI.md), [PROMPT.md](./PROMPT.md) e [INTEGRANTES.md](./INTEGRANTES.md). O professor deve receber acesso ao repositório privado conforme a tarefa FIAP.

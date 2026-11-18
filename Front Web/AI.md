@@ -16,6 +16,4 @@ A IA foi utilizada como apoio ao desenvolvimento do front-end do ViaTempo. A equ
 - analisar problemas relatados pela equipe, corrigir código e revisar a compilação;
 - preparar e revisar documentação do projeto.
 
-As recomendações da Teca são regras locais demonstrativas, não respostas de um modelo de IA em tempo de execução. A previsão de atraso também é simulada. As alterações sugeridas pela IA foram incorporadas ao código e à documentação e devem ser revisadas pela equipe antes da entrega.
-
-As solicitações foram refinadas ao longo do trabalho por meio de feedback sobre telas, comportamento e prioridades. A IA não definiu o problema social, a proposta do produto ou os critérios do trabalho: esses elementos vieram da equipe e dos documentos fornecidos.
+As recomendações da Teca são regras locais demonstrativas, não respostas de um modelo de IA em tempo de execução. A previsão de atraso também é simulada. A IA não definiu o problema social, a proposta do produto ou os critérios do trabalho.
