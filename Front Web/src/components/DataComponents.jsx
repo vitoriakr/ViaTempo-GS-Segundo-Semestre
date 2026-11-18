@@ -34,12 +34,35 @@ export function ImportExportPanel({ data, onImport, onDeleteData, onNavigate }) 
   return <div className="data-page">
     <header className="page-intro data-page-heading"><div><span className="eyebrow">PORTABILIDADE</span><h2>Importar e exportar</h2></div><button className="btn data-back-button" onClick={() => onNavigate('home')}><span aria-hidden="true">←</span> Início</button></header>
     <div className="data-board"><section className="data-choice-card"><span className="data-choice-art" aria-hidden="true"><svg viewBox="0 0 120 100"><path d="M23 23h46l19 19v43H23z"/><path d="M69 23v20h19M37 57h36M37 68h24"/><path d="M91 48v34m-12-12 12 12 12-12"/></svg></span><span className="eyebrow">IMPORTAR</span><h3>Trazer arquivos</h3><label className="btn btn-dark data-file-choice"><input type="file" accept=".ics,.json,text/calendar,application/json" onChange={(event) => { readFile(event.target.files?.[0]); event.target.value = ''; }} />{busy ? 'Lendo arquivo…' : 'Selecionar arquivo'}</label><CalendarImportHelp />{error && <p className="form-alert" role="alert">{error}</p>}<small>.ics · JSON · calendário</small></section>
-      <section className="data-choice-card"><span className="data-choice-art" aria-hidden="true"><svg viewBox="0 0 120 100"><rect x="25" y="20" width="70" height="62" rx="12"/><path d="M42 40h36M42 51h22M42 62h29"/><path d="M77 72v19m-8-8 8 8 8-8"/></svg></span><span className="eyebrow">EXPORTAR</span><h3>Levar minha agenda</h3><div className="data-export-actions"><button className="btn btn-dark" onClick={backup}>Backup completo</button><button className="btn btn-outline-dark" onClick={json}>JSON para Python</button><button className="btn btn-outline-dark" onClick={ics}>Calendário .ics</button></div><small>{data.events.length} compromissos · {data.locations.length} locais</small></section></div>
+      <section className="data-choice-card"><span className="data-choice-art" aria-hidden="true"><svg viewBox="0 0 120 100"><rect x="25" y="20" width="70" height="62" rx="12"/><path d="M42 40h36M42 51h22M42 62h29"/><path d="M77 72v19m-8-8 8 8 8-8"/></svg></span><span className="eyebrow">EXPORTAR</span><h3>Levar minha agenda</h3><div className="data-export-actions"><button className="btn btn-dark" onClick={backup}>Backup completo</button><button className="btn btn-outline-dark" onClick={json}>JSON para Python</button><button className="btn btn-outline-dark" onClick={ics}>Calendário .ics</button></div><CalendarExportHelp /><small>{data.events.length} compromissos · {data.locations.length} locais</small></section></div>
   </div>;
 }
 
 export function CalendarImportHelp() {
-  return <details className="calendar-import-help"><summary>Como exporto meu calendário?</summary><div className="calendar-help-content"><p><strong>Google Calendar</strong>Configurações → Importar e exportar → Exportar. Extraia o ZIP e escolha o arquivo .ics.</p><p><strong>Apple Calendar</strong>Arquivo → Exportar → Exportar… e salve como .ics.</p><p><strong>Outlook</strong>Abra o calendário, escolha Compartilhar/Exportar e salve como .ics.</p><p><strong>JSON</strong>Selecione o arquivo gerado pelo ViaTempo ou pela análise Python.</p></div></details>;
+  return <div className="calendar-import-help">
+    <p className="calendar-help-intro"><strong>O que é .ics?</strong> É um arquivo de agenda: reúne compromissos que outro calendário consegue ler. Ele não conecta sua conta nem sincroniza mudanças futuras.</p>
+    <details><summary>Como trazer meu calendário?</summary><div className="calendar-help-content">
+      <ol><li>Abra o calendário onde seus compromissos estão e procure a opção <strong>Exportar</strong> ou <strong>Baixar calendário</strong>.</li><li>Escolha o formato <strong>.ics</strong>. Se vier um arquivo .zip, extraia-o primeiro e procure o arquivo .ics dentro da pasta.</li><li>No ViaTempo, toque em <strong>Selecionar arquivo</strong> e escolha esse arquivo .ics no dispositivo.</li><li>Os compromissos serão adicionados à sua agenda atual. Confira os horários e destinos depois da importação.</li></ol>
+      <p><strong>Google Calendar</strong>No computador, abra as configurações e procure “Importar e exportar” → “Exportar”. O Google costuma baixar um .zip com os arquivos .ics.</p>
+      <p><strong>Apple Calendar</strong>No Mac, selecione o calendário e use Arquivo → Exportar. Escolha onde salvar o arquivo .ics.</p>
+      <p><strong>Outlook</strong>Na agenda, procure a opção de compartilhar, salvar ou exportar calendário e escolha .ics. Os nomes podem variar conforme a versão.</p>
+      <p><strong>Seus dados</strong>A importação é feita pelo arquivo que você selecionou. Não é necessário informar senha nem conectar sua conta.</p>
+    </div></details>
+    <details><summary>Meu arquivo não aparece ou não abre</summary><div className="calendar-help-content"><p>Confira se o arquivo termina em <strong>.ics</strong> ou <strong>.json</strong>. Arquivos .zip precisam ser extraídos antes. Se exportou vários calendários, selecione o .ics que corresponde à agenda desejada.</p></div></details>
+  </div>;
+}
+
+export function CalendarExportHelp() {
+  return <div className="calendar-export-help">
+    <p className="calendar-help-intro"><strong>O arquivo .ics é uma cópia.</strong> Ele pode ser importado em outro aplicativo de calendário; alterações feitas depois no ViaTempo não atualizam essa cópia automaticamente.</p>
+    <details><summary>Como usar o arquivo que baixei?</summary><div className="calendar-help-content">
+      <ol><li>Toque em <strong>Calendário .ics</strong>. O arquivo <strong>viatempo-agenda.ics</strong> será baixado no seu dispositivo.</li><li>Abra o calendário para onde quer levar os compromissos e procure <strong>Importar</strong> ou <strong>Adicionar calendário por arquivo</strong>.</li><li>Selecione o arquivo baixado e confirme. O aplicativo de destino pode perguntar em qual calendário salvar.</li></ol>
+      <p><strong>Google Calendar</strong>Nas configurações, use “Importar e exportar” → “Importar” e escolha o .ics.</p>
+      <p><strong>Apple Calendar</strong>No Mac, use Arquivo → Importar e escolha o arquivo .ics.</p>
+      <p><strong>Outlook</strong>Na área de calendários, escolha adicionar/importar calendário a partir de arquivo .ics.</p>
+      <p><strong>Backup completo e JSON para Python</strong>São arquivos diferentes do .ics: o backup guarda os dados ViaTempo e o JSON é destinado à análise e integração com Python.</p>
+    </div></details>
+  </div>;
 }
 
 export function LocationsPanel({ locations, onSave, onDelete }) {

@@ -423,3 +423,21 @@ body:has(.app-frame.is-dark){background:#0b1220;color:#e3eaf4}
 .onboarding-teca-greeting strong{color:#284c7c;font-size:12px;font-weight:700}
 .onboarding-teca-greeting small{color:#687d99;font-size:10px}
 @media(max-width:700px){.onboarding-nav.centered{min-height:166px}.onboarding-teca-greeting{padding:7px 11px 7px 7px}.onboarding-teca-picture{width:40px;height:40px}.onboarding-teca-picture .teca-avatar{width:35px;height:35px}}
+
+/* Plain-language calendar file guidance. */
+.calendar-import-help,.calendar-export-help{grid-column:1/-1;width:100%;margin-top:12px;padding-top:10px;border-top:1px solid rgba(70,105,155,.12)}
+.calendar-import-help details,.calendar-export-help details{margin-top:9px}
+.calendar-import-help summary,.calendar-export-help summary{list-style:none;cursor:pointer;color:#2c69c8;font-size:12px;font-weight:650}
+.calendar-import-help summary::-webkit-details-marker,.calendar-export-help summary::-webkit-details-marker{display:none}
+.calendar-import-help summary:after,.calendar-export-help summary:after{content:'+';float:right;font-size:16px;line-height:14px}
+.calendar-import-help details[open]>summary:after,.calendar-export-help details[open]>summary:after{content:'−'}
+.calendar-help-intro{margin:0;color:#63728a;font-size:11px;line-height:1.5}
+.calendar-help-intro strong{color:#304662}
+.calendar-help-content{display:grid;gap:9px;margin-top:10px}
+.calendar-help-content p{display:grid;gap:2px;margin:0;color:#65748a;font-size:11px;line-height:1.5}
+.calendar-help-content p strong{color:#304662;font-size:11px}
+.calendar-help-content ol{display:grid;gap:7px;margin:0;padding-left:20px;color:#65748a;font-size:11px;line-height:1.5}
+.calendar-help-content li strong{color:#304662}
+.app-frame.is-dark .calendar-help-intro,.app-frame.is-dark .calendar-help-content p,.app-frame.is-dark .calendar-help-content ol{color:#b5c5db}
+.app-frame.is-dark .calendar-help-intro strong,.app-frame.is-dark .calendar-help-content p strong,.app-frame.is-dark .calendar-help-content li strong{color:#dceaff}
+@media(max-width:700px){.calendar-help-content p,.calendar-help-content ol{font-size:10px}.calendar-import-help summary,.calendar-export-help summary{font-size:11px}}
