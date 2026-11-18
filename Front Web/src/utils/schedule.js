@@ -59,3 +59,19 @@ export function findScheduleConflicts(events) {
 
   return conflicts;
 }
+
+
+/** Encapsula as operações derivadas da agenda sem alterar os eventos de origem. */
+export class Agenda {
+  constructor(events = []) {
+    this.events = [...events];
+  }
+
+  get sortedEvents() {
+    return [...this.events].sort((a, b) => `${a.date}T${a.time}`.localeCompare(`${b.date}T${b.time}`));
+  }
+
+  get conflicts() {
+    return findScheduleConflicts(this.sortedEvents);
+  }
+}

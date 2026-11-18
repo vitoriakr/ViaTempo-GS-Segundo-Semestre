@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { api, makeId } from '../services/api';
-import { todayISO, buildRecommendation, findScheduleConflicts, formatDate, formatTime } from '../utils/schedule';
+import { Agenda, todayISO, buildRecommendation, formatDate, formatTime } from '../utils/schedule';
 import { Sidebar, Topbar, Toast, Modal, Brand } from './Primitives';
 import { EmptyState, EventCard, EventModal, RecommendationMessage } from './EventComponents';
 import { ImportExportPanel, LocationsPanel, AccountModal } from './DataComponents';
@@ -34,8 +34,9 @@ export default function App() {
     return () => window.clearTimeout(timeout);
   }, [toast]);
 
-  const sortedEvents = useMemo(() => [...data.events].sort((a, b) => `${a.date}T${a.time}`.localeCompare(`${b.date}T${b.time}`)), [data.events]);
-  const eventConflicts = useMemo(() => findScheduleConflicts(sortedEvents), [sortedEvents]);
+  const agenda = useMemo(() => new Agenda(data.events), [data.events]);
+  const sortedEvents = agenda.sortedEvents;
+  const eventConflicts = agenda.conflicts;
   const todayEvents = sortedEvents.filter((event) => event.date === today);
   const upcoming = sortedEvents.filter((event) => new Date(`${event.date}T${event.time}`) >= new Date());
   const nextEvent = upcoming[0];
