@@ -324,9 +324,9 @@ Quando existem registros históricos próximos ao horário desejado, mas não ex
 
 O programa procura, minuto a minuto, o horário mais tarde em que o usuário ainda consegue chegar ao compromisso respeitando a margem de segurança:
 
-\[
+
 S+T(S)+M\leq C
-\]
+
 
 Onde:
 
