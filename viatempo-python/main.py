@@ -269,9 +269,37 @@ def relatorio(dados):
 
 
 # -------------------------------------- menu --------------------------------------
+
+def apresentar_viatempo():
+    print("\n" + "=" * 55)
+    print("                    VIATEMPO")
+    print("             Seu caminho, no tempo certo.")
+    print("=" * 55)
+
+    print("\nO ViaTempo ajuda você a organizar seus compromissos")
+    print("e planejar seus deslocamentos.")
+
+    print("\nCom base nos seus horários, destinos e dados de")
+    print("trajetos, o sistema calcula quando começar a se")
+    print("preparar e quando sair para chegar no horário.")
+
+    print("\nPOR ONDE COMEÇAR?")
+    print("[1] Consulte seus compromissos e horários recomendados.")
+    print("[2] Cadastre um novo compromisso.")
+    print("[3] Consulte ou exclua compromissos.")
+    print("[4] Cadastre seus locais frequentes.")
+
+    print("\nVocê pode cadastrar compromissos com ou sem")
+    print("deslocamento. Para receber recomendações de saída,")
+    print("informe também o destino.")
+
+    print("\n" + "=" * 55)
+    input("Pressione Enter para acessar o menu...")
+
+
 def carregar_dados():
     padrao_usuario = {"nome": "Usuário", "preparacao_padrao": 45,
-                      "margem_padrao": 10, "limite_variacao": 5}
+                    "margem_padrao": 10, "limite_variacao": 5}
     return {
     "usuario": ler_json("usuario.json", padrao_usuario),
     "locais": ler_json("locais.json", []),
@@ -281,10 +309,12 @@ def carregar_dados():
 
 
 def main():
+    apresentar_viatempo()
     dados = carregar_dados()
-    acoes = {"1": ver_meu_dia, "2": cadastrar_compromisso, "3": listar_e_excluir,
-             "4": cadastrar_local, "5": configurar, "6": simular_mudanca,
-             "7": registrar_feedback, "8": relatorio}
+
+    acoes =  {"1": ver_meu_dia, "2": cadastrar_compromisso, "3": listar_e_excluir,
+            "4": cadastrar_local, "5": configurar, "6": simular_mudanca,
+            "7": registrar_feedback, "8": relatorio}
     while True:
         print(f"\n========== VIATEMPO – Olá, {dados['usuario']['nome']}! ==========")
         print("[1] Meu dia                    [5] Configurar preparação e margem")

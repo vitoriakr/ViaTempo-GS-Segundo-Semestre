@@ -42,7 +42,7 @@
   {
     "id": 5,
     "titulo": "Chamada com o orientador",
-    "data": "2026-11-25",
+    "data": "2026-11-20",
     "horario": "10:30",
     "destino": null,
     "duracao_min": 30,
@@ -51,22 +51,122 @@
   },
   {
     "id": 6,
-    "titulo": "terapia",
-    "data": "2026-11-22",
-    "horario": "15:00",
-    "destino": "hospital",
-    "duracao_min": 50,
-    "preparacao": 20,
+    "titulo": "Aula de Engenharia de Software",
+    "data": "2026-11-26",
+    "horario": "08:00",
+    "destino": "FIAP",
+    "duracao_min": 210,
+    "preparacao": null,
     "margem": 10
   },
   {
     "id": 7,
-    "titulo": "academia",
-    "data": "2026-11-20",
-    "horario": "18:00",
-    "destino": "sarandi",
+    "titulo": "Almoço",
+    "data": "2026-11-26",
+    "horario": "12:00",
+    "destino": null,
+    "duracao_min": 60,
+    "preparacao": 15,
+    "margem": null
+  },
+  {
+    "id": 8,
+    "titulo": "Estágio",
+    "data": "2026-11-26",
+    "horario": "13:30",
+    "destino": "Estágio",
+    "duracao_min": 300,
+    "preparacao": 20,
+    "margem": 10
+  },
+  {
+    "id": 9,
+    "titulo": "Academia",
+    "data": "2026-11-26",
+    "horario": "19:00",
+    "destino": null,
+    "duracao_min": 60,
+    "preparacao": 15,
+    "margem": null
+  },
+  {
+    "id": 10,
+    "titulo": "Estudar para a prova de programação",
+    "data": "2026-11-27",
+    "horario": "09:00",
+    "destino": null,
+    "duracao_min": 120,
+    "preparacao": 10,
+    "margem": null
+  },
+  {
+    "id": 11,
+    "titulo": "Entrega do trabalho em grupo",
+    "data": "2026-11-27",
+    "horario": "14:00",
+    "destino": "FIAP",
     "duracao_min": 60,
     "preparacao": 20,
-    "margem": 20
+    "margem": 15
+  },
+  {
+    "id": 12,
+    "titulo": "Cinema com os amigos",
+    "data": "2026-11-27",
+    "horario": "19:30",
+    "destino": null,
+    "duracao_min": 150,
+    "preparacao": 30,
+    "margem": null
+  },
+  {
+    "id": 13,
+    "titulo": "Caminhada no parque",
+    "data": "2026-11-28",
+    "horario": "08:00",
+    "destino": null,
+    "duracao_min": 60,
+    "preparacao": 15,
+    "margem": null
+  },
+  {
+    "id": 14,
+    "titulo": "Café da manhã com a família",
+    "data": "2026-11-28",
+    "horario": "09:30",
+    "destino": null,
+    "duracao_min": 60,
+    "preparacao": 10,
+    "margem": null
+  },
+  {
+    "id": 15,
+    "titulo": "Estudar para a faculdade",
+    "data": "2026-11-28",
+    "horario": "11:00",
+    "destino": null,
+    "duracao_min": 120,
+    "preparacao": 10,
+    "margem": null
+  },
+  {
+    "id": 16,
+    "titulo": "Almoço com os amigos",
+    "data": "2026-11-28",
+    "horario": "13:30",
+    "destino": null,
+    "duracao_min": 90,
+    "preparacao": 30,
+    "margem": null
+  },
+  {
+    "id": 17,
+    "titulo": "Organizar a semana e revisar tarefas",
+    "data": "2026-11-28",
+    "horario": "17:00",
+    "destino": null,
+    "duracao_min": 60,
+    "preparacao": 5,
+    "margem": null
   }
 ]

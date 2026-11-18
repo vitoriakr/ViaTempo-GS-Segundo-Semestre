@@ -1,19 +1,42 @@
 {
-  "usuario": "",
-  "data": "2026-11-17",
+  "usuario": "Marina",
+  "data": "2026-11-19",
   "compromissos": [
     {
       "id": 1,
-      "data": "2026-11-17",
-      "titulo": "aula",
-      "horario": "18:00",
-      "destino": "fiap",
-      "saida": "17:10",
-      "despertar": "16:50",
-      "trajeto_min": 40,
-      "fonte": "manual",
+      "titulo": "Aula na FIAP",
+      "horario": "08:00",
+      "destino": "FIAP",
+      "saida": "07:11",
+      "despertar": "06:26",
+      "trajeto_min": 33,
+      "fonte": "histórico",
+      "urgencia": "vermelho",
+      "mensagem": "Saia no horário! Cada minuto de atraso aumenta bastante o trajeto."
+    },
+    {
+      "id": 2,
+      "titulo": "Almoço em casa",
+      "horario": "12:00",
+      "destino": null,
+      "saida": null,
+      "despertar": "11:45",
+      "trajeto_min": 0,
+      "fonte": null,
       "urgencia": "verde",
-      "mensagem": "Horário calculado com base nos tempos informados."
+      "mensagem": "Compromisso sem deslocamento."
+    },
+    {
+      "id": 3,
+      "titulo": "Estágio",
+      "horario": "13:30",
+      "destino": "Estágio",
+      "saida": "12:45",
+      "despertar": "12:25",
+      "trajeto_min": 35,
+      "fonte": "histórico",
+      "urgencia": "verde",
+      "mensagem": "Trânsito tranquilo: alguns minutos a mais não mudam muito."
     }
   ],
   "alerta": null
