@@ -209,14 +209,6 @@ python gerar_dados.py
 python -m pytest -q
 ```
 
-### Equipe responsável
-
-| Nome | RM |
-|---|---|
-| Anita Palhares | RM571264 |
-| Kauã Coelho | RM568665 |
-| Vitória Kereski | RM569438 |
-
 ## 6. Como utilizar o programa Python
 
 Ao iniciar o Python, o usuário encontra uma breve apresentação do ViaTempo e, em seguida, o menu principal.
@@ -297,9 +289,9 @@ O ViaTempo utiliza modelos matemáticos desenvolvidos na disciplina de **Differe
 
 O modelo considera dois períodos de maior movimento: manhã e tarde. A função implementada em `src/modelo.py` é:
 
-\[
+
 T(t)=T_b+1{,}2T_b e^{-2(t-8)^2}+T_b e^{-2(t-18)^2}
-\]
+
 
 Onde:
 
@@ -311,9 +303,9 @@ A função representa o aumento do tempo de deslocamento nos horários de pico, 
 
 ### 9.2. Modelo de atraso por acidente
 
-\[
+
 D(t)=20(1-e^{-t/15})
-\]
+
 
 Onde:
 
