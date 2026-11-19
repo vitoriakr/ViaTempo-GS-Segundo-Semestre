@@ -1,0 +1,76 @@
+{
+  "version": 1,
+  "author": "Dev.Ak - ViaTempo",
+  "editor": "wokwi",
+  "parts": [
+    { "type": "board-esp32-devkit-c-v4", "id": "esp", "top": -86.4, "left": -110.36, "attrs": {} },
+    {
+      "type": "wokwi-lcd1602",
+      "id": "lcd",
+      "top": -252.8,
+      "left": 44,
+      "attrs": { "pins": "i2c" }
+    },
+    {
+      "type": "wokwi-dht22",
+      "id": "dht",
+      "top": 100.8,
+      "left": -238.5,
+      "rotate": 270,
+      "attrs": { "temperature": "80", "humidity": "100" }
+    },
+    {
+      "type": "wokwi-potentiometer",
+      "id": "pot",
+      "top": -95,
+      "left": -289.3,
+      "rotate": 270,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-buzzer",
+      "id": "bz",
+      "top": -117.9,
+      "left": 148.5,
+      "rotate": 90,
+      "attrs": {}
+    },
+    { "type": "wokwi-led", "id": "led", "top": 82.8, "left": 119, "attrs": { "color": "red" } },
+    {
+      "type": "wokwi-resistor",
+      "id": "r1",
+      "top": 128.75,
+      "left": 144,
+      "attrs": { "value": "220" }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btn",
+      "top": -13,
+      "left": 163.2,
+      "attrs": { "color": "green", "label": "Soneca" }
+    }
+  ],
+  "connections": [
+    [ "esp:TX", "$if:serial", "rx", [] ],
+    [ "esp:RX", "$if:serial", "tx", [] ],
+    [ "esp:GND.1", "lcd:GND", "black", [ "h-67.05", "v-288" ] ],
+    [ "esp:5V", "lcd:VCC", "red", [ "h-19.05", "v-326.5" ] ],
+    [ "esp:21", "lcd:SDA", "blue", [ "h19.2", "v-192.2" ] ],
+    [ "esp:22", "lcd:SCL", "yellow", [ "h9.6", "v-153.9" ] ],
+    [ "esp:3V3", "dht:VCC", "red", [ "h-28.65", "v230.4" ] ],
+    [ "esp:15", "dht:SDA", "green", [ "v0" ] ],
+    [ "esp:GND.2", "dht:GND", "black", [ "h28.8", "v201.6" ] ],
+    [ "esp:GND.1", "pot:GND", "black", [ "h-95.85", "v-105.6" ] ],
+    [ "esp:34", "pot:SIG", "orange", [ "h-86.25", "v-29.2" ] ],
+    [ "esp:3V3", "pot:VCC", "red", [ "v0" ] ],
+    [ "esp:18", "bz:1", "purple", [ "h134.4", "v-105.6" ] ],
+    [ "esp:GND.2", "bz:2", "black", [ "v-19.2", "h19.2", "v0.4" ] ],
+    [ "esp:19", "r1:1", "green", [ "h9.6", "v106.05" ] ],
+    [ "r1:2", "led:A", "green", [ "v0" ] ],
+    [ "esp:GND.2", "led:C", "black", [ "v-38.4", "h38.4", "v192" ] ],
+    [ "esp:4", "btn:1.l", "cyan", [ "h163.2", "v-57.6" ] ],
+    [ "esp:GND.1", "btn:2.r", "black", [ "h-9.45", "v105.6", "h345.4" ] ]
+  ],
+  "dependencies": {}
+}
